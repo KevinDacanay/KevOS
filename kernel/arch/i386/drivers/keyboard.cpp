@@ -1,0 +1,93 @@
+#include "keyboard.h"
+#include <kernel/arch/i386/cpu/io.h> // For inb
+#include <kernel/arch/i386/cpu/pic.h> // For pic_eoi
+#include <kernel/arch/i386/cpu/idt.h> // For idt_set_gate (to register handler) and struct registers
+#include <kernel/arch/i386/cpu/irq.h> // For irq_install_handler
+#include <stdio.h> // For printf
+#include <kernel/tty.h> // For terminal_putchar
+
+// Keyboard controller ports
+#define KBD_DATA_PORT   0x60
+#define KBD_STATUS_PORT 0x64
+
+// Keyboard State
+static bool caps_lock = false;
+static bool lshift_pressed = false;
+static bool rshift_pressed = false;
+
+// Scancode set 1 (simplified for basic ASCII)
+// This is a very basic mapping. A real driver would handle shift, caps lock, etc.
+static const char kbd_us[128] =
+{
+    0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
+    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
+    0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',   0, '\\',
+    'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',   0, '*',   0, ' ',
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+};
+
+static const char kbd_us_shifted[128] =
+{
+    0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+    '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
+    0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~',   0, '|',
+    'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',   0, '*',   0, ' ',
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+};
+
+// This is the C-level IRQ handler for the keyboard.
+// It would be called by an assembly stub that saves/restores registers.
+extern "C" void keyboard_handler(struct registers* regs) {
+    (void)regs;
+    uint8_t scancode = inb(KBD_DATA_PORT);
+
+    // Handle modifier keys (Shift, Caps Lock)
+    switch (scancode) {
+        case 0x2A: // Left Shift Pressed
+            lshift_pressed = true;
+            return;
+        case 0xAA: // Left Shift Released
+            lshift_pressed = false;
+            return;
+        case 0x36: // Right Shift Pressed
+            rshift_pressed = true;
+            return;
+        case 0xB6: // Right Shift Released
+            rshift_pressed = false;
+            return;
+        case 0x3A: // Caps Lock Pressed (Toggle)
+            caps_lock = !caps_lock;
+            return;
+        default:
+            break;
+    }
+
+    // Only handle key presses (bit 7 is 0 for press, 1 for release)
+    if (!(scancode & 0x80)) {
+        bool shift_active = lshift_pressed || rshift_pressed;
+        char c = shift_active ? kbd_us_shifted[scancode] : kbd_us[scancode];
+
+        if (c != 0) {
+            // Apply Caps Lock logic for letters
+            if (caps_lock && c >= 'a' && c <= 'z') c -= 32;
+            else if (caps_lock && c >= 'A' && c <= 'Z') c += 32;
+
+            terminal_putchar(c); // Output to the terminal
+        }
+    }
+}
+
+extern "C" {
+
+void keyboard_install(void) {
+    irq_install_handler(1, keyboard_handler);
+    printf("Keyboard driver installed.\n");
+}
+
+} // extern "C"

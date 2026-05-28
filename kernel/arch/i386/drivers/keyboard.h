@@ -1,0 +1,8 @@
+#ifndef KERNEL_ARCH_I386_DRIVERS_KEYBOARD_H
+#define KERNEL_ARCH_I386_DRIVERS_KEYBOARD_H
+
+extern "C" {
+void keyboard_install(void);
+}
+
+#endif // KERNEL_ARCH_I386_DRIVERS_KEYBOARD_H
