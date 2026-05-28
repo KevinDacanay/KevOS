@@ -1,0 +1,44 @@
+         +------------------------------+
+0x000000 |     Real Mode IVT / BIOS     | <- Interrupt Vector Table (0x0000–0x03FF)
+         |     Reserved for BIOS ROM    |
+         |     Memory below 1MB         |
+         +------------------------------+
+0x00100000 (1 MB)
+         |      Kernel Image Start      |
+         |      (loaded by GRUB)        |
+         +------------------------------+
+         | .multiboot (Multiboot Header)|
+         |  → Must appear early         |
+         +------------------------------+
+         | .text (Kernel Code)          |
+         |  → All your compiled C/C++   |
+         |     instructions             |
+         |  → _start(), kernel_main()   |
+         +------------------------------+
+         | .rodata (Read-Only Data)     |
+         |  → String literals, consts   |
+         +------------------------------+
+         | .bss (Zero-Initialized Data) |
+         |  → Uninitialized globals     |
+         |  → static int x = 0;         |
+         +------------------------------+
+         |      Free Kernel Heap Area   |
+         |  → You can place heap here   |
+         +------------------------------+
+         |      Kernel Stack (optional) |
+         |  → May be placed here or in  |
+         |     .bss as you're doing now |
+         +------------------------------+
+         |      Page Tables (optional)  |
+         |  → For paging-enabled kernels|
+         +------------------------------+
+         |   User Programs (later)      |
+         +------------------------------+
+
+| Section      | Description                           | Example Range           |
+| ------------ | ------------------------------------- | ----------------------- |
+| `.multiboot` | Multiboot header (early in `.text`)   | 0x00100000 – 0x00100020 |
+| `.text`      | Kernel code (instructions)            | 0x00100020 – 0x00102FFF |
+| `.rodata`    | Constants, string literals            | 0x00103000 – 0x00103FFF |
+| `.bss`       | Zero-initialized global variables     | 0x00104000 – 0x00104FFF |
+| Heap/Stack   | For dynamic memory or manually placed | 0x00105000+             |

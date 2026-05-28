@@ -1,0 +1,56 @@
+# Kernel and Library Design for Cross-Compiling
+
+The GCC documentation explicitly states that `libgcc` requires the freestanding environment to supply the `memcmp`, `memcpy`, `memmove`, and `memset` functions, as well as `abort` on some platforms. We will satisfy this requirement by creating a special kernel C library (`libk`) that contains the parts of the user-space `libc` that are freestanding (doesn't require any kernel features) as opposed to hosted `libc` features that need to do system calls.
+
+## System Root
+
+Normally, when you compile programs for your local operating system, the compiler locates development files such as headers and libraries in system directories such as:
+
+```
+/usr/include
+/usr/lib
+```
+
+The makefiles will install the system headers into the `sysroot/usr/include` directory, the system libraries into the `sysroot/usr/lib` directory, and the kernel itself into the `sysroot/boot` directory.
+
+The `-elf` targets have no user-space and are incapable of having one. We configured the compiler with system root support, so it will look in `${SYSROOT}/usr/lib` as expected. We prevented the compiler from searching for a standard library using the `--without-headers` option when building `i686-elf-gcc`, so it will not look in `${SYSROOT}/usr/include`. (Once you add a user-space and a `libc`, you will configure your custom cross-gcc with `--with-sysroot`, and it will look in `${SYSROOT}/usr/include`. As a temporary workaround until you get that far, we fix it by passing `-isystem=/usr/include`).
+
+## Kernel Design
+
+We have moved the kernel into its own directory named `kernel/`. It would perhaps be better to call it something else if your kernel has another name than your full operating system distribution, though calling it `kernel/` makes it easier for other hobbyist developers to find the core parts of your new operating system.
+
+The kernel installs its public kernel headers into `sysroot/usr/include/kernel`. This is useful if you decide to create a kernel with modules, where modules can then simply include the public headers from the main kernel.
+
+GNU GRUB is used as the bootloader, and the kernel uses Multiboot as in the Bare Bones tutorial. The kernel implements the correct way of invoking global constructors (useful for C++ code and C code using `__attribute__((constructor))`). The bootstrap assembly calls `_init`, which invokes all the global constructors. These are invoked very early in the boot without any specific ordering. You should only use them to initialize global variables that could not be initialized at runtime. The special `__is_kernel` macro lets the source code detect whether it is part of the kernel.
+
+## libc and libk Design
+
+The `libc` and `libk` are actually two versions of the same library, which is stored in the directory `libc/`. The standard library is split into two versions: freestanding and hosted. The difference is that the freestanding library (`libk`) doesn't contain any of the code that only works in user-space, such as system calls. The `libk` is also built with different compiler options, just like the kernel isn't built like normal user-space code.
+
+You are not required to have a `libk`. You could just as easily have a regular `libc` and a fully separate minimal project inside the kernel directory. The standard headers use a BSD-like scheme where `sys/cdefs.h` declares a bunch of useful preprocessor macros meant for internal use by the standard library. All the function prototypes are wrapped in `extern "C" { ... }` such that C++ code can correctly link against `libc` (as `libc` doesn't use C++ linkage).
+
+## Cross-Compiling the Operating System
+
+The system is cross-compiled in the same manner as Bare Bones, though with the complexity of having a system root with the final system and using a `libk`. In this example, we elected to use shell scripts for the top-level build process, though you could possibly also use a makefile for that or a wholly different build system. Assuming this setup works for you, you can clean the source tree by invoking:
+
+```bash
+./clean.sh
+```
+
+You can install all the system headers into the system root without relying on the compiler at all, which will be useful later on when switching to a Hosted GCC Cross-Compiler, by invoking:
+
+```bash
+./headers.sh
+```
+
+You can build a bootable CD-ROM image of the operating system by invoking:
+
+```bash
+./iso.sh
+```
+
+It's probably a good idea to create a quick build-and-then-launch shortcut like used in this example to run the system in your favorite emulator quickly:
+
+```bash
+./qemu.sh
+```
