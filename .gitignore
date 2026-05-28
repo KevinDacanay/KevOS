@@ -1,0 +1,19 @@
+# Build output and staging
+bin/
+sysroot/
+isodir/
+
+# Final OS images
+*.kernel
+*.iso
+
+# Object files and dependency tracking
+*.o
+*.d
+
+# Editor and System temporary files
+*.swp
+.DS_Store
+
+# Local AI context/notes
+GEMINI.md
