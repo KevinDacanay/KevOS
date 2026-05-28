@@ -42,3 +42,38 @@
 | `.rodata`    | Constants, string literals            | 0x00103000 – 0x00103FFF |
 | `.bss`       | Zero-initialized global variables     | 0x00104000 – 0x00104FFF |
 | Heap/Stack   | For dynamic memory or manually placed | 0x00105000+             |
+
+Simple Terminal-based OS structure:
++--------------------------------------+
+| User Programs / Commands             |
+| (shell, ls, cat, echo, etc.)         |
++--------------------------------------+
+| Shell / Terminal                     |
++--------------------------------------+
+| System Call Interface                |
++--------------------------------------+
+| Kernel                               |
+|--------------------------------------|
+| Process Manager                      |
+| Memory Manager                       |
+| File System                          |
+| Device Drivers                       |
+| IPC Manager                          |
+| Scheduler                            |
++--------------------------------------+
+| Hardware / Emulator                  |
++--------------------------------------+
+
+The process usually goes in this order:
+- Bootloader
+- Enter protected/long mode
+- Kernel initialization
+- Terminal output
+- Interrupt handling
+- Memory management
+- Process/task system
+- Keyboard input
+- Shell
+- File system
+- User programs
+- Advanced features

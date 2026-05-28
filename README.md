@@ -1,73 +1,65 @@
-# Minimal 64-bit CLI-Based Operating System
+# KevOS: A Minimal x86 Operating System
 
 ## Overview
-This project is a minimal yet powerful **64-bit Command-Line Interface (CLI) Operating System** designed for educational and experimental purposes.  
-The OS supports **concurrency, multithreading, multiprocessing, memory management, paging**, and more — all built from scratch.
+KevOS is a custom-built operating system designed for educational and experimental purposes. It is currently a **32-bit Protected Mode kernel** targeting the `i686-elf` architecture, built with a modular design that facilitates an eventual transition to 64-bit Long Mode. 
 
-## Core Functionalities
-
-### 1. Boot & Initialization
-- **UEFI or BIOS Bootloader**: Loads the 64-bit kernel into memory.
-- **Long Mode Initialization**: Enters 64-bit mode, sets up GDT and IDT.
-- **Kernel Entry Point**: Starts kernel initialization and main loop.
-
-### 2. Command-Line Interface (CLI)
-- **Terminal Driver**: Reads keyboard input and displays output.
-- **Shell**: Parses and executes built-in commands.
-- **Basic Commands**: `ls`, `cat`, `echo`, `clear`, `help`.
-
-### 3. Memory Management
-- **Physical Memory Manager (PMM)**: Tracks and allocates physical memory.
-- **Virtual Memory Manager (VMM)**: Implements paging and address mapping.
-- **Heap Allocator**: Dynamic memory allocation for the kernel.
-- **Stack Management**: Handles process and thread stacks.
-
-### 4. Process Management
-- **Process Control Block (PCB)**: Stores registers, memory maps, process state.
-- **Process Creation & Termination**: Spawn and clean up processes.
-- **Context Switching**: Save/restore CPU state between processes.
-
-### 5. Concurrency & Multithreading
-- **Thread Management**: Multiple threads per process.
-- **Preemptive Multitasking**: Timer-based scheduling.
-- **Synchronization**: Mutexes, semaphores, spinlocks.
-
-### 6. Interrupt & Exception Handling
-- **IDT Setup**: Handles hardware interrupts and CPU exceptions.
-- **Interrupt Service Routines (ISRs)**: Respond to hardware signals.
-- **System Calls**: Safe kernel interaction for user programs.
-
-### 7. Filesystem Support
-- **Basic Filesystem** (e.g., FAT32 or custom): Read/write files.
-- **VFS Layer**: Filesystem abstraction for multiple types.
-
-### 8. Drivers
-- **Keyboard Driver**: Converts scancodes to characters.
-- **Screen/Terminal Driver**: Manages text output.
-- **Storage Driver**: Disk I/O (ATA, NVMe, etc.).
-- **Timer Driver**: Multitasking and timekeeping support.
+The project focuses on building a stable, Unix-like CLI environment from the ground up using freestanding C++ and a custom internal `libc`.
 
 ---
 
-## Core Characteristics
-1. **64-bit Long Mode**: Modern CPU architecture support.
-2. **Multitasking**: Run multiple processes with CPU time-slicing.
-3. **Multiprocessing**: Use multiple CPU cores (SMP support).
-4. **Multithreading**: Threads share memory for efficient concurrency.
-5. **Preemptive Scheduling**: OS controls task switching.
-6. **Protected Mode & Ring Privileges**: Process isolation and stability.
-7. **Paging & Virtual Memory**: Per-process address space isolation.
-8. **Concurrency Control**: Mutexes, semaphores, spinlocks.
-9. **Modularity**: Separate kernel, drivers, and user programs.
-10. **Portability**: Hardware-independent code where possible.
+## Current Status (Implemented)
+The following core components are fully operational:
+
+### 1. Boot & Core Hardware
+- **Multiboot/GRUB**: Bootable via GRUB in a Protected Mode environment.
+- **GDT (Global Descriptor Table)**: Custom flat memory model segments established.
+- **IDT (Interrupt Descriptor Table)**: Full interrupt routing for all 256 gates.
+- **PIC Remapping**: Hardware interrupts correctly routed to the 0x20-0x2F range.
+- **ISRs & IRQs**: Exception handling and hardware interrupt management.
+
+### 2. Drivers & Input
+- **VGA Text Driver**: Supports 80x25 terminal output with newline processing and automatic scrolling.
+- **Keyboard Driver**: Interrupt-driven scancode translation with support for **Shift**, **Caps Lock**, and **Backspace**.
+- **Internal libc**: Freestanding implementation of `stdio` and `string` functions.
 
 ---
 
-## Summary
-This OS boots into **64-bit mode**, manages **processes and threads** across multiple CPU cores, implements **memory paging**, and exposes a **CLI shell** for direct user interaction.  
-It is modular, supports **preemptive multitasking**, and ensures **process isolation** with virtual memory.
+## Planned Functionalities (Roadmap)
+Detailed task tracking is maintained in `docs/plans.md`.
+
+- **Keyboard Line Discipline**: Buffering input for shell processing.
+- **Physical Memory Manager (PMM)**: Bitmap-based page allocation.
+- **Virtual Memory Manager (VMM)**: Paging and higher-half kernel mapping.
+- **Preemptive Multitasking**: Round-robin scheduler and context switching.
+- **Shell Engine**: Interactive command parsing (`help`, `clear`, `ls`).
+- **x86_64 Transition**: Moving to Long Mode and 64-bit execution.
 
 ---
 
-## License
-[MIT License](LICENSE)
+## Project Structure
+```text
+OperatingSystemsProject/
+├── kernel/
+│   ├── arch/i386/        # Arch-specific code (GDT, IDT, Drivers)
+│   ├── include/          # Kernel headers
+│   └── kernel/           # Main kernel logic
+├── libc/                 # Custom freestanding C library
+├── docs/                 # Architecture, design, and roadmap documentation
+└── *.sh                  # Build and emulation scripts
+```
+
+---
+
+## Sources & Credits
+This project stands on the shoulders of the OS development community. Significant inspiration, architectural patterns, and examples have been drawn from:
+- OSDev Wiki: The primary technical reference for x86 hardware and kernel protocols.
+- **"Operating Systems: A Practical Approach" by Robert Switzer**: Used as a foundational textbook for understanding kernel design and implementation logic.
+
+---
+
+## Building KevOS
+The system requires an `i686-elf` cross-compiler.
+
+1. **Build Headers**: `./headers.sh`
+2. **Compile**: `./build.sh`
+3. **Run in QEMU**: `./qemu.sh`
