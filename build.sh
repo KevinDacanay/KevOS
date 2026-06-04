@@ -43,11 +43,11 @@ $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/drivers/keyboard.cpp -o bin/keyboard
 $HOST-g++ $COMMON_FLAGS -c kernel/kernel/kernel.cpp -o bin/kernel.o
 
 # Link the final kernel
-$HOST-g++ -T kernel/arch/i386/boot/linker.ld -o bin/myos.kernel -ffreestanding -O2 -nostdlib \
+$HOST-g++ -T kernel/arch/i386/boot/linker.ld -o bin/kevos.kernel -ffreestanding -O2 -nostdlib \
     bin/crti.o bin/boot.o bin/interrupts.o bin/kernel.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/keyboard.o bin/putchar.o bin/printf.o bin/strlen.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
 
-if [ -f bin/myos.kernel ]; then
-    echo "Build successful: bin/myos.kernel"
+if [ -f bin/kevos.kernel ]; then
+    echo "Build successful: bin/kevos.kernel"
 else
     echo "Build failed!"
     exit 1

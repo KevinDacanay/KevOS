@@ -3,14 +3,14 @@ set -e
 . ./config.sh
 
 mkdir -p isodir/boot/grub
-cp bin/myos.kernel isodir/boot/myos.kernel
+cp bin/kevos.kernel isodir/boot/kevos.kernel
 cat << EOF > isodir/boot/grub/grub.cfg
-menuentry "myos" {
-	multiboot /boot/myos.kernel
+menuentry "KevOS" {
+	multiboot /boot/kevos.kernel
 }
 EOF
 
-grub-mkrescue -o myos.iso isodir
+grub-mkrescue -o kevos.iso isodir
 
 echo "Starting QEMU..."
-qemu-system-i386 -cdrom myos.iso -serial stdio
+qemu-system-i386 -cdrom kevos.iso -serial stdio

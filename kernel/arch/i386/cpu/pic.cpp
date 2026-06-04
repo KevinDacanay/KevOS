@@ -1,7 +1,13 @@
+/**
+ * @file pic.cpp
+ * @brief Programmable Interrupt Controller (PIC) management.
+ *
+ * This file contains functions for remapping and interacting with the
+ * 8259A Programmable Interrupt Controllers (PICs) in master/slave configuration.
+ */
+
 #include "pic.h"
 #include "io.h" // For outb and inb
-
-// PIC ports
 #define PIC1_COMMAND    0x20
 #define PIC1_DATA       0x21
 #define PIC2_COMMAND    0xA0
@@ -14,6 +20,14 @@
 
 extern "C" {
 
+/**
+ * @brief Remaps the PICs to new interrupt vector offsets.
+ *
+ * By default, the PICs use IRQ vectors 0-15, which conflict with CPU exceptions.
+ * This function remaps them to a safe range (e.g., 32-47).
+ * @param offset1 The desired starting vector for the Master PIC (IRQs 0-7).
+ * @param offset2 The desired starting vector for the Slave PIC (IRQs 8-15).
+ */
 void pic_remap(int offset1, int offset2) {
     uint8_t a1, a2;
 
@@ -42,11 +56,17 @@ void pic_remap(int offset1, int offset2) {
     outb(PIC2_DATA, a2);
 }
 
+/**
+ * @brief Sends an End-Of-Interrupt (EOI) signal to the PICs.
+ *
+ * This must be done at the end of every IRQ handler to allow further interrupts
+ * from the PIC. If the IRQ came from the slave PIC, an EOI must be sent to both.
+ * @param irq The IRQ number (0-15) that was handled.
+ */
 void pic_eoi(uint8_t irq) {
     if (irq >= 8) {
         outb(PIC2_COMMAND, 0x20); // EOI to slave
     }
     outb(PIC1_COMMAND, 0x20); // EOI to master
 }
-
 } // extern "C"

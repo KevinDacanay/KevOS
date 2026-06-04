@@ -15,7 +15,7 @@ extern "C" void kernel_main() {
 
     asm volatile("sti");   // Enable hardware interrupts
 
-    printf("Hello, kernel!\n");
+    printf("Hello, welcome to KevOS!\n");
 
     // Keep the kernel alive so interrupts can continue to fire
     for (;;) { }

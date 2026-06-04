@@ -1,3 +1,11 @@
+/**
+ * @file idt.cpp
+ * @brief Interrupt Descriptor Table (IDT) implementation.
+ *
+ * This file contains the C++ implementation for setting up and installing the IDT.
+ * It defines the IDT entries for CPU exceptions and hardware interrupts (IRQs).
+ */
+
 #include "idt.h"
 #include <stdio.h>
 
@@ -37,7 +45,7 @@ void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
     idt_entries[num].flags = flags;
 }
 
-// Function to install the IDT
+/** @brief Initializes the IDT and loads it into the CPU. */
 void idt_install(void) {
     idt_ptr.limit = (sizeof(struct idt_entry_struct) * 256) - 1;
     idt_ptr.base = (uint32_t)&idt_entries;
@@ -47,7 +55,7 @@ void idt_install(void) {
         idt_set_gate(i, 0, 0, 0); // Set all entries to null initially
     }
 
-    // CPU Exceptions
+    // Set gates for CPU Exceptions (ISRs 0-31)
     idt_set_gate(0, (uint32_t)isr0, 0x08, 0x8E);
     idt_set_gate(1, (uint32_t)isr1, 0x08, 0x8E);
     idt_set_gate(2, (uint32_t)isr2, 0x08, 0x8E);
@@ -81,7 +89,7 @@ void idt_install(void) {
     idt_set_gate(30, (uint32_t)isr30, 0x08, 0x8E);
     idt_set_gate(31, (uint32_t)isr31, 0x08, 0x8E);
 
-    // Hardware IRQs
+    // Set gates for Hardware IRQs (IRQs 0-15, remapped to vectors 32-47)
     idt_set_gate(32, (uint32_t)irq0, 0x08, 0x8E);
     idt_set_gate(33, (uint32_t)irq1, 0x08, 0x8E);
     idt_set_gate(34, (uint32_t)irq2, 0x08, 0x8E);
@@ -99,7 +107,7 @@ void idt_install(void) {
     idt_set_gate(46, (uint32_t)irq14, 0x08, 0x8E);
     idt_set_gate(47, (uint32_t)irq15, 0x08, 0x8E);
 
-    // Load the IDT
+    // Load the IDT into the CPU using the 'lidt' assembly instruction.
     asm volatile("lidt %0" : : "m"(idt_ptr));
 }
 
