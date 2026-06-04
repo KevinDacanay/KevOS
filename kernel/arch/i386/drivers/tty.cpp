@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <kernel/arch/i386/cpu/io.h>
 #include <kernel/tty.h>
 
 /**
@@ -59,6 +60,35 @@ static uint8_t terminal_color;        ///< Current text attribute (color)
 static uint16_t* terminal_buffer;     ///< Pointer to the VGA memory (0xB8000)
 
 /**
+ * @brief Updates the hardware cursor position on the screen.
+ * 
+ * Tells the VGA controller where to render the blinking cursor based
+ * on the current terminal_row and terminal_column.
+ */
+void update_cursor() {
+	uint16_t pos = terminal_row * VGA_WIDTH + terminal_column;
+
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+/**
+ * @brief Configures the hardware cursor shape and enables it.
+ * 
+ * @param cursor_start Top scanline (0-15).
+ * @param cursor_end Bottom scanline (0-15).
+ */
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
+/**
  * @brief Clears the screen and initializes the terminal state.
  * 
  * Sets the cursor to (0,0), defines the default color (Light Grey on Black),
@@ -76,6 +106,10 @@ void terminal_initialize(void) {
 			terminal_buffer[index] = vga_entry(' ', terminal_color);
 		}
 	}
+
+	// Enable a block cursor (0-15 scanlines)
+	enable_cursor(0, 15);
+	update_cursor();
 }
 
 /**
@@ -113,6 +147,7 @@ void terminal_putchar(char c) {
 			terminal_scroll();
 			terminal_row = VGA_HEIGHT - 1;
 		}
+		update_cursor();
 		return;
 	}
 
@@ -128,6 +163,7 @@ void terminal_putchar(char c) {
 		// Erase the character at the new cursor position
 		const size_t index = terminal_row * VGA_WIDTH + terminal_column;
 		terminal_buffer[index] = vga_entry(' ', terminal_color);
+		update_cursor();
 		return;
 	}
 
@@ -141,6 +177,7 @@ void terminal_putchar(char c) {
 			terminal_row = VGA_HEIGHT - 1;
 		}
 	}
+	update_cursor();
 }
 
 void terminal_write(const char* data, size_t size) {
