@@ -1,7 +1,7 @@
-# Project Overview: BareBonesOS
+# Project Overview: KevOS
 
 ## Vision
-BareBonesOS is a custom-built, 32-bit x86 operating system designed with a modular "MeatyOS" philosophy. While it currently operates in 32-bit Protected Mode, the underlying architecture is being prepared for an eventual transition to 64-bit Long Mode. The goal is to create a stable, CLI-driven environment with a robust custom `libc`.
+KevOS is a custom-built, 32-bit x86 operating system. While it currently operates in 32-bit Protected Mode, the underlying architecture is being prepared for an eventual transition to 64-bit Long Mode. The goal is to create a stable, CLI-driven environment with a robust custom `libc`.
 
 ## Core Objectives
 1. **Stability First**: Implementing reliable GDT and IDT structures to prevent Triple Faults.

@@ -1,0 +1,680 @@
+# Building a Simple Terminal-Based Operating System
+
+## High-Level OS Architecture
+
+```text
++--------------------------------------------------+
+|                User Programs                     |
+|        (shell, ls, cat, echo, etc.)              |
++--------------------------------------------------+
+|                 Shell / Terminal                 |
++--------------------------------------------------+
+|             System Call Interface                |
++--------------------------------------------------+
+|                     Kernel                       |
+|--------------------------------------------------|
+|  • Process Manager                               |
+|  • Memory Manager                                |
+|  • File System                                   |
+|  • Device Drivers                                |
+|  • IPC Manager                                   |
+|  • Scheduler                                     |
++--------------------------------------------------+
+|             Hardware / Emulator                  |
++--------------------------------------------------+
+```
+
+---
+
+# Operating System Development Roadmap
+
+The process of creating a terminal-based operating system typically follows this order:
+
+1. Bootloader
+2. Enter Protected / Long Mode
+3. Kernel Initialization
+4. Terminal Output
+5. Interrupt Handling
+6. Memory Management
+7. Process / Task System
+8. Keyboard Input
+9. Shell
+10. File System
+11. User Programs
+12. Advanced Features
+
+---
+
+# Stage 1 — Development Environment
+
+You generally do **not** develop directly on real hardware initially.
+
+Most OS developers use:
+
+* Cross-compilers
+* Emulators / Virtual Machines
+
+---
+
+## Required Tools
+
+### Compiler
+
+Most commonly:
+
+```bash
+i386-elf-gcc
+```
+
+Used for compiling 32-bit x86 kernels.
+
+---
+
+### Emulator
+
+Most common choice:
+
+```bash
+qemu-system-i386
+```
+
+This safely runs your operating system inside a virtual machine.
+
+---
+
+### Build Tools
+
+Common tools:
+
+* Make
+* NASM
+* LD Linker
+
+---
+
+# Stage 2 — Bootloader
+
+When the CPU powers on, it starts in a very primitive state.
+
+The bootloader is responsible for:
+
+* Loading the kernel into memory
+* Switching CPU modes
+* Jumping execution to the kernel
+
+---
+
+## Option A — Use GRUB (Recommended)
+
+GRUB simplifies booting significantly.
+
+### Boot Flow
+
+```text
+BIOS / UEFI
+      ↓
+     GRUB
+      ↓
+    Kernel
+```
+
+You create:
+
+* Kernel binary
+* GRUB configuration
+* Bootable ISO image
+
+---
+
+## Option B — Write Your Own Bootloader
+
+More educational, but significantly harder.
+
+Requires:
+
+* Assembly programming
+* BIOS interaction
+* Manual sector loading
+
+---
+
+# Stage 3 — Enter Protected Mode (i386)
+
+The CPU initially starts in:
+
+```text
+16-bit Real Mode
+```
+
+Modern kernels switch into:
+
+```text
+32-bit Protected Mode
+```
+
+Later systems may use:
+
+```text
+64-bit Long Mode
+```
+
+---
+
+## Benefits of Protected Mode
+
+* Memory protection
+* 32-bit registers
+* Paging support
+* Multitasking capabilities
+
+---
+
+# Stage 4 — Minimal Kernel
+
+Your first kernel usually just prints text.
+
+Example:
+
+```c
+void kernel_main() {
+    print("Hello from kernel!");
+}
+```
+
+---
+
+## VGA Text Mode
+
+Most beginner kernels write directly to VGA memory:
+
+```c
+char* video = (char*) 0xB8000;
+```
+
+This displays text directly to the screen.
+
+---
+
+# Stage 5 — Interrupts
+
+Interrupts allow hardware and exceptions to notify the CPU.
+
+Examples:
+
+* Keyboard presses
+* Divide-by-zero exceptions
+* Timer ticks
+
+---
+
+## Interrupt Descriptor Table (IDT)
+
+You will create:
+
+* Interrupt handlers
+* Interrupt tables
+* ISR assembly stubs
+
+### Interrupt Flow
+
+```text
+Hardware
+    ↓
+Interrupt Controller
+    ↓
+       IDT
+    ↓
+Kernel Handler
+```
+
+---
+
+# Stage 6 — Memory Management
+
+One of the most important parts of an OS.
+
+---
+
+## Physical Memory Manager (PMM)
+
+Tracks:
+
+* Free RAM pages
+* Used RAM pages
+
+Often implemented with:
+
+* Bitmap allocators
+
+---
+
+## Virtual Memory Manager (VMM)
+
+Maps:
+
+```text
+Virtual Addresses → Physical Addresses
+```
+
+Uses:
+
+* Paging
+* Page tables
+
+### Benefits
+
+* Isolation
+* Security
+* Process independence
+
+---
+
+# Stage 7 — Scheduler & Processes
+
+At this point your OS can run multiple tasks.
+
+---
+
+## Process Control Block (PCB)
+
+Each process stores metadata such as:
+
+```text
+PID
+Registers
+Stack
+State
+Memory Map
+Priority
+```
+
+---
+
+## Scheduler
+
+Determines which process runs next.
+
+### Beginner Scheduler
+
+* Round Robin
+
+### Scheduling Flow
+
+```text
+Timer Interrupt
+        ↓
+    Scheduler
+        ↓
+  Context Switch
+        ↓
+   Next Process
+```
+
+---
+
+## Context Switching
+
+The OS saves:
+
+* Registers
+* Stack pointer
+* Instruction pointer
+
+Then restores another process state.
+
+---
+
+# Stage 8 — Keyboard Driver
+
+Required for terminal input.
+
+---
+
+## PS/2 Keyboard
+
+Read scan codes from:
+
+```text
+Port 0x60
+```
+
+Convert:
+
+```text
+Scan Code → ASCII
+```
+
+Then pass input into the shell.
+
+---
+
+# Stage 9 — Building the Shell
+
+Your OS is now interactive.
+
+Example prompt:
+
+```text
+MyOS>
+```
+
+---
+
+## Shell Responsibilities
+
+The shell:
+
+* Reads keyboard input
+* Parses commands
+* Launches programs
+* Interacts with kernel APIs
+
+---
+
+## Example Commands
+
+```text
+help
+clear
+echo
+ls
+reboot
+meminfo
+```
+
+---
+
+# Stage 10 — File System
+
+Without storage, your OS loses all data after shutdown.
+
+---
+
+## Beginner File Systems
+
+Good starter options:
+
+* FAT12
+* FAT16
+* Simple custom filesystem
+
+---
+
+## File System Architecture
+
+```text
+Shell
+  ↓
+VFS (Optional)
+  ↓
+Filesystem Driver
+  ↓
+Disk Driver
+  ↓
+Hardware
+```
+
+---
+
+# Stage 11 — User Mode
+
+Initially everything runs in kernel mode.
+
+Later you add:
+
+* User processes
+* Privilege separation
+
+---
+
+## x86 Ring Levels
+
+```text
+Ring 0 → Kernel
+Ring 3 → User Applications
+```
+
+System calls provide safe transitions between them.
+
+---
+
+# Stage 12 — System Calls
+
+Applications need controlled access to kernel functionality.
+
+Example system calls:
+
+```c
+write()
+read()
+fork()
+exec()
+open()
+```
+
+### System Call Flow
+
+```text
+User Program
+      ↓
+System Call Interface
+      ↓
+     Kernel
+```
+
+---
+
+# Stage 13 — IPC (Inter-Process Communication)
+
+Processes need communication mechanisms.
+
+Common IPC methods:
+
+* Pipes
+* Shared memory
+* Message queues
+* Signals
+
+---
+
+# Stage 14 — Device Drivers
+
+Drivers allow communication with hardware.
+
+Examples:
+
+* Keyboard
+* Timer
+* Disk
+* Serial Port
+
+Drivers are often highly hardware-specific.
+
+---
+
+# Stage 15 — Advanced Features
+
+After the basics are functional:
+
+---
+
+## Networking
+
+* Ethernet
+* TCP/IP stack
+* Sockets
+
+---
+
+## Advanced Multitasking
+
+* Preemptive scheduling
+* Priorities
+
+---
+
+## Security
+
+* Permissions
+* User accounts
+
+---
+
+## ELF Executables
+
+Run compiled user programs.
+
+---
+
+## Dynamic Memory
+
+Kernel heap allocator.
+
+---
+
+## SMP (Symmetric Multiprocessing)
+
+Support for multiple CPU cores.
+
+---
+
+# Recommended Beginner Learning Path
+
+## First
+
+* GRUB Bootloader
+* VGA Text Output
+* Keyboard Input
+* Basic Shell
+
+---
+
+## Second
+
+* Interrupts
+* Memory Management
+* Scheduler
+* Processes
+
+---
+
+## Third
+
+* File System
+* User Mode
+* System Calls
+* IPC
+
+---
+
+# Example Project Structure
+
+```text
+/myos
+├── /boot
+├── /kernel
+├── /drivers
+├── /memory
+├── /process
+├── /fs
+├── /shell
+├── /lib
+└── Makefile
+```
+
+---
+
+# Languages Used
+
+## Assembly
+
+Needed for:
+
+* Bootloader
+* Interrupts
+* Low-level CPU operations
+
+---
+
+## C
+
+Most kernels use C because it is:
+
+* Close to hardware
+* Portable
+* Efficient
+
+Examples:
+
+* Linux
+* MINIX
+* xv6
+
+---
+
+## Rust
+
+A modern alternative focused on:
+
+* Memory safety
+* Reliability
+* Growing OS ecosystem
+
+---
+
+# Recommended Beginner Resources
+
+## OSDev Wiki
+
+Excellent reference for low-level OS development.
+
+---
+
+# Example Educational Operating Systems
+
+## xv6
+
+MIT educational Unix-like OS.
+
+---
+
+## MINIX 3
+
+Educational microkernel operating system.
+
+---
+
+## TempleOS
+
+Famous hobby operating system.
+
+---
+
+# Recommended Beginner Stack
+
+```text
+Architecture : i386 (32-bit x86)
+Bootloader   : GRUB
+Language     : C + Assembly
+Display      : VGA Text Mode
+Filesystem   : FAT12
+Emulator     : QEMU
+```
+
+---
+
+# Final Advice
+
+Your first goal should NOT be:
+
+```text
+"Build Linux"
+```
+
+Your first goal should be:
+
+```text
+Boot → Print Text → Keyboard → Shell → Multitasking
+```
+
+That alone teaches the core principles of operating systems development.

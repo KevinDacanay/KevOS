@@ -9,11 +9,11 @@
 | **CORE-03** | PIC Remapping & IRQ Handling | High | 4h | **Done** |
 | **DRV-01** | VGA Text Mode Driver (Scrolling/Newline) | High | 5h | **Done** |
 | **DRV-02** | Keyboard Driver (Scancode Translation) | High | 4h | **Done** |
-| **UI-01** | Keyboard Input Buffering (Line Discipline) | Highest | 4h | **In-Progress** |
+| **UI-01** | Keyboard Input Buffering (Line Discipline) | Highest | 4h | **In-Progress** | 
 | **DRV-04** | VGA Hardware Cursor Management | Highest | 3h | **Todo** |
 | **UI-02** | Simple Command Parser (`help`, `clear`) | Highest | 6h | **Todo** |
 | **CORE-04** | PIT (Programmable Interval Timer) Setup | Highest | 4h | **Todo** |
-| **MEM-01** | Physical Memory Manager (PMM) - Bitmap | Highest | 10h | **Todo** |
+| **MEM-01** | Physical Memory Manager (PMM) - Bitmap | Highest | 10h | **Todo** | 
 | **DRV-03** | Circular Buffers for Data I/O | Medium | 3h | **Todo** |
 | **MEM-02** | Virtual Memory Manager (Paging) | High | 12h | **Todo** |
 | **MEM-04** | Higher-Half Kernel Mapping | Medium | 8h | **Todo** |
