@@ -21,6 +21,9 @@ void* memmove(void*, const void*, size_t);
 // Fill memory block with value (usually 0)
 void* memset(void*, int, size_t);
 
+// Compare two strings
+int strcmp(const char*, const char*);
+
 // Get string length (not including null terminator)
 size_t strlen(const char*);
 

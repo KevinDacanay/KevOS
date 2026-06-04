@@ -5,6 +5,7 @@
 #include <kernel/arch/i386/cpu/gdt.h>
 #include <kernel/arch/i386/cpu/idt.h>
 #include <kernel/arch/i386/drivers/keyboard.h>
+#include <kernel/arch/i386/drivers/shell.h>
 
 extern "C" void kernel_main() {
     terminal_initialize();
@@ -17,6 +18,6 @@ extern "C" void kernel_main() {
 
     printf("Hello, welcome to KevOS!\n");
 
-    // Keep the kernel alive so interrupts can continue to fire
-    for (;;) { }
+    // Enter the interactive shell
+    shell_main();
 }

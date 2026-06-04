@@ -116,23 +116,12 @@ extern "C" void keyboard_handler(struct registers* regs) {
             if (caps_lock && c >= 'a' && c <= 'z') c -= 32;
             else if (caps_lock && c >= 'A' && c <= 'Z') c += 32;
 
-            if (c == '\b') {
-                // Handle Backspace: Only remove from buffer if it's not empty
-                if (kbd_buffer_head != kbd_buffer_tail) {
-                    // Move head back (handling wrap-around)
-                    kbd_buffer_head = (kbd_buffer_head - 1) % KBD_BUFFER_SIZE;
-                    terminal_putchar(c); 
-                }
-            } else {
-                // Handle standard character: Push to circular buffer
-                uint32_t next = (kbd_buffer_head + 1) % KBD_BUFFER_SIZE;
-                
-                // Check for buffer overflow
-                if (next != kbd_buffer_tail) {
-                    kbd_buffer[kbd_buffer_head] = c;
-                    kbd_buffer_head = next;
-                    terminal_putchar(c); // Echo to screen
-                }
+            // Simply push the character (including \b or \n) to the circular buffer.
+            // The consumer (shell) will handle echoing and line discipline.
+            uint32_t next = (kbd_buffer_head + 1) % KBD_BUFFER_SIZE;
+            if (next != kbd_buffer_tail) {
+                kbd_buffer[kbd_buffer_head] = c;
+                kbd_buffer_head = next;
             }
         }
     }
