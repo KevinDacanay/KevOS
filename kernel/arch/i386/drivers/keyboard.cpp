@@ -20,6 +20,12 @@
 #define KBD_DATA_PORT   0x60
 #define KBD_STATUS_PORT 0x64
 
+// Buffer Configuration
+#define KBD_BUFFER_SIZE 256
+static char kbd_buffer[KBD_BUFFER_SIZE];
+static uint32_t kbd_buffer_head = 0; ///< Write pointer for the ISR
+static uint32_t kbd_buffer_tail = 0; ///< Read pointer for the kernel
+
 // Keyboard State
 static bool caps_lock = false;      ///< Tracks the toggle state of Caps Lock.
 static bool lshift_pressed = false; ///< Tracks if the Left Shift key is currently held down.
@@ -110,8 +116,24 @@ extern "C" void keyboard_handler(struct registers* regs) {
             if (caps_lock && c >= 'a' && c <= 'z') c -= 32;
             else if (caps_lock && c >= 'A' && c <= 'Z') c += 32;
 
-            // Send the character to the VGA driver for display
-            terminal_putchar(c); 
+            if (c == '\b') {
+                // Handle Backspace: Only remove from buffer if it's not empty
+                if (kbd_buffer_head != kbd_buffer_tail) {
+                    // Move head back (handling wrap-around)
+                    kbd_buffer_head = (kbd_buffer_head - 1) % KBD_BUFFER_SIZE;
+                    terminal_putchar(c); 
+                }
+            } else {
+                // Handle standard character: Push to circular buffer
+                uint32_t next = (kbd_buffer_head + 1) % KBD_BUFFER_SIZE;
+                
+                // Check for buffer overflow
+                if (next != kbd_buffer_tail) {
+                    kbd_buffer[kbd_buffer_head] = c;
+                    kbd_buffer_head = next;
+                    terminal_putchar(c); // Echo to screen
+                }
+            }
         }
     }
 
@@ -123,6 +145,21 @@ extern "C" {
 void keyboard_install(void) {
     irq_install_handler(1, keyboard_handler);
     printf("Keyboard driver installed. Type away...\n");
+}
+
+char keyboard_getchar(void) {
+    // Block while buffer is empty
+    while (kbd_buffer_head == kbd_buffer_tail) {
+        // Using 'hlt' is battery-friendly; it stops the CPU until the next interrupt
+        asm volatile("hlt");
+    }
+
+    // Fetch character from the tail
+    char c = kbd_buffer[kbd_buffer_tail];
+    // Advance the tail pointer
+    kbd_buffer_tail = (kbd_buffer_tail + 1) % KBD_BUFFER_SIZE;
+    
+    return c;
 }
 
 } // extern "C"
