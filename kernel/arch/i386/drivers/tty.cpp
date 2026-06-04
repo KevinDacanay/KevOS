@@ -73,7 +73,7 @@ void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
 void terminal_initialize(void) {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK); // Default color
+	terminal_color = vga_entry_color(VGA_COLOR_MAGENTA, VGA_COLOR_BLACK); // Default color
 	terminal_buffer = (uint16_t*) 0xB8000; // Physical address for VGA text mode buffer
 
 	for (size_t y = 0; y < VGA_HEIGHT; y++) {
