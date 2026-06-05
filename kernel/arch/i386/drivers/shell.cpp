@@ -6,13 +6,13 @@
  * keyboard driver for input and the TTY driver for output.
  */
 
-#include "shell.h"
+#include <kernel/arch/i386/drivers/include/shell.h>
 #include <stdio.h>
 #include <string.h> // For strlen, strcmp
 #include <stdlib.h> // For abort()
-#include <kernel/include/kernel/tty.h>
-#include <kernel/arch/i386/drivers/keyboard.h>
-#include <kernel/arch/i386/cpu/io.h> // For outb (reboot command)
+#include <kernel/tty.h>
+#include <kernel/arch/i386/drivers/include/keyboard.h>
+#include <kernel/arch/i386/cpu/include/io.h> // For outb (reboot command)
 
 /**
  * @brief Reads a line of input from the keyboard.

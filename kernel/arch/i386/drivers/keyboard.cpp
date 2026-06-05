@@ -8,11 +8,11 @@
  * Currently, it uses a simplified US-English layout mapping.
  */
 
-#include "keyboard.h"
-#include <kernel/arch/i386/cpu/io.h> // For inb
-#include <kernel/arch/i386/cpu/pic.h> // For pic_eoi
-#include <kernel/arch/i386/cpu/idt.h> // For idt_set_gate (to register handler) and struct registers
-#include <kernel/arch/i386/cpu/irq.h> // For irq_install_handler
+#include <kernel/arch/i386/drivers/include/keyboard.h>
+#include <kernel/arch/i386/cpu/include/io.h> // For inb
+#include <kernel/arch/i386/cpu/include/pic.h> // For pic_eoi
+#include <kernel/arch/i386/cpu/include/idt.h> // For idt_set_gate (to register handler) and struct registers
+#include <kernel/arch/i386/cpu/include/irq.h> // For irq_install_handler
 #include <stdio.h> // For printf
 #include <kernel/tty.h> // For terminal_putchar
 
@@ -133,7 +133,7 @@ extern "C" {
 
 void keyboard_install(void) {
     irq_install_handler(1, keyboard_handler);
-    printf("Keyboard driver installed. Type away...\n");
+    printf("Keyboard driver installed. Typing enabled!\n");
 }
 
 char keyboard_getchar(void) {

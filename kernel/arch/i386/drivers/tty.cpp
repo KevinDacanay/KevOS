@@ -9,8 +9,8 @@
 
 #include <stdbool.h>
 #include <string.h>
-#include <kernel/arch/i386/cpu/io.h>
-#include <kernel/include/kernel/tty.h>
+#include <kernel/arch/i386/cpu/include/io.h>
+#include <kernel/tty.h>
 
 /**
  * @brief Combines a foreground and background color into a single 8-bit attribute.
