@@ -7,7 +7,7 @@
  * It also includes a utility for I/O delays.
  */
 
-#include "io.h"
+#include <kernel/arch/i386/cpu/include/io.h>
 
 extern "C" {
 

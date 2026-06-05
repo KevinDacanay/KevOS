@@ -6,7 +6,7 @@
  * The GDT is crucial for defining memory segments and privilege levels in Protected Mode.
  */
 
-#include "gdt.h"
+#include <kernel/arch/i386/cpu/include/gdt.h>
 
 // Array of GDT entries. We need at least 3: a null segment, a code segment, and a data segment.
 struct gdt_entry_struct gdt_entries[3];

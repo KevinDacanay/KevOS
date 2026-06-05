@@ -6,7 +6,7 @@
  * It defines the IDT entries for CPU exceptions and hardware interrupts (IRQs).
  */
 
-#include "idt.h"
+#include <kernel/arch/i386/cpu/include/idt.h>
 #include <stdio.h>
 
 // Forward declarations for assembly stubs

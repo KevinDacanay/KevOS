@@ -7,8 +7,8 @@
  * IRQ handler called by the assembly stubs.
  */
 
-#include "irq.h"
-#include "pic.h"
+#include <kernel/arch/i386/cpu/include/irq.h>
+#include <kernel/arch/i386/cpu/include/pic.h>
 #include <stddef.h>
 
 // Array of function pointers for custom IRQ handlers.

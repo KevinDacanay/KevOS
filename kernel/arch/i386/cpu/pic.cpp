@@ -6,8 +6,8 @@
  * 8259A Programmable Interrupt Controllers (PICs) in master/slave configuration.
  */
 
-#include "pic.h"
-#include "io.h" // For outb and inb
+#include <kernel/arch/i386/cpu/include/pic.h>
+#include <kernel/arch/i386/cpu/include/io.h> // For outb and inb
 #define PIC1_COMMAND    0x20
 #define PIC1_DATA       0x21
 #define PIC2_COMMAND    0xA0

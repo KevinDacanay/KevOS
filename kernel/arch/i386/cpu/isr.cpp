@@ -6,7 +6,7 @@
  * It is called by the assembly `isr_common_stub` after saving the CPU state.
  */
 
-#include "idt.h"
+#include <kernel/arch/i386/cpu/include/idt.h>
 #include <stdio.h>
 
 /**
