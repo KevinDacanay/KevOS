@@ -34,10 +34,10 @@ _start:
     # Set the stack pointer (esp) to the top of our reserved stack.
     movl $stack_top, %esp
 
-    # Call the function that handles global/static C++ constructors.
-    # This is provided by crti.o/crtn.o or manually defined.
-    # For a barebones setup, we disable this until crti.o/crtn.o are integrated.
-    # call _init
+    # Push the Multiboot magic and info pointer for kernel_main
+    # GRUB puts the magic in eax and the pointer in ebx
+    pushl %ebx
+    pushl %eax
 
     # Jump to the main kernel function (C++ kernel_main defined in kernel.cpp).
     call kernel_main

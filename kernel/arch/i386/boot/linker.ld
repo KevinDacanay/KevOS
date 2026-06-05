@@ -9,6 +9,7 @@ SECTIONS
 {
     /* The kernel will be loaded by GRUB at 1MB (0x100000). */
     . = 0x100000;
+    _kernel_start = .;
 
     /* The .text section contains executable code. */
     .text : ALIGN(0x1000)
@@ -22,4 +23,6 @@ SECTIONS
 
     /* The .bss section contains uninitialized data. */
     .bss : ALIGN(0x1000) { *(.bss) }
+
+    _kernel_end = .;
 }
