@@ -5,24 +5,34 @@
 
 ENTRY(_start) /* The kernel entry point is the _start symbol from boot.S */
 
+/* Define the virtual and physical offsets */
+VIRT_BASE = 0xC0000000;
+PHYS_BASE = 0x100000;
+
 SECTIONS
 {
-    /* The kernel will be loaded by GRUB at 1MB (0x100000). */
-    . = 0x100000;
+    /* The kernel starts at 1MB physically, but symbols start at 3GB + 1MB */
+    . = VIRT_BASE + PHYS_BASE;
     _kernel_start = .;
 
-    /* The .text section contains executable code. */
-    .text : ALIGN(0x1000)
+    /* Use AT() to specify the Load Memory Address (LMA) */
+    
+    .text : AT(ADDR(.text) - VIRT_BASE) ALIGN(0x1000)
     {
         *(.multiboot) /* The Multiboot header MUST be the first thing in the kernel. */
         *(.text)      /* All other code follows. */
     }
 
-    /* The .data section contains initialized data. */
-    .data : ALIGN(0x1000) { *(.data) }
+    .data : AT(ADDR(.data) - VIRT_BASE) ALIGN(0x1000)
+    {
+        *(.data)
+    }
 
-    /* The .bss section contains uninitialized data. */
-    .bss : ALIGN(0x1000) { *(.bss) }
+    .bss : AT(ADDR(.bss) - VIRT_BASE) ALIGN(0x1000)
+    {
+        *(.bss)
+        *(COMMON)
+    }
 
     _kernel_end = .;
 }
