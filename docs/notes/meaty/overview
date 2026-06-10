@@ -1,3 +1,4 @@
+**Courtesy of OSWikiDev**
 # Kernel and Library Design for Cross-Compiling
 
 The GCC documentation explicitly states that `libgcc` requires the freestanding environment to supply the `memcmp`, `memcpy`, `memmove`, and `memset` functions, as well as `abort` on some platforms. We will satisfy this requirement by creating a special kernel C library (`libk`) that contains the parts of the user-space `libc` that are freestanding (doesn't require any kernel features) as opposed to hosted `libc` features that need to do system calls.

@@ -1,61 +1,97 @@
-# Architecture Design Document
+# KevOS Architecture Design Document
 
-This document details the low-level implementation logic for the i386 architecture.
+This document provides an extensive breakdown of KevOS's internal structure, detailing the interaction between hardware abstraction layers, interrupt logic, and the user interface.
 
-## 1. Memory Layout
-- **Load Address**: The kernel is loaded at `1 MiB` (0x100000) by the bootloader (GRUB).
-- **VGA Buffer**: Located at `0xB8000`. The `tty.cpp` driver manages this 80x25 character grid.
-- **Stack**: A 16 KiB stack is defined in `boot.S`, aligned to 16 bytes for compatibility.
+## 1. The Boot Chain: From GRUB to C++
+The boot process begins with GNU GRUB, which loads our kernel using the Multiboot protocol.
 
-## 2. Segmentation (GDT)
-The Global Descriptor Table defines the memory segments the CPU can access. We use a "Flat Memory Model":
-- **Null Segment (0x00)**: Required by the processor.
-- **Kernel Code Segment (0x08)**: Base 0, Limit 4GB, Ring 0, Exec/Read.
-- **Kernel Data Segment (0x10)**: Base 0, Limit 4GB, Ring 0, Read/Write.
+1.  **`kernel/arch/i386/boot/boot.S`**: 
+    *   Defines the Multiboot header for GRUB.
+    *   Establishes a 16 KiB stack.
+    *   Calls `_init` to execute global C++ constructors (critical for static objects).
+    *   Jumps to `kernel_main`.
+2.  **`kernel/kernel/kernel.cpp`**: 
+    *   The high-level entry point. It orchestrates the initialization of all sub-systems (GDT, IDT, Drivers) and finally hands over control to `shell_main`.
 
-*Implementation: `kernel/arch/i386/cpu/gdt.cpp`*
+## 2. Core CPU Infrastructure (The Plumbing)
+The "Wiring" of the kernel relies on three main components working in tandem: Segmentation, Interrupt routing, and I/O.
 
-## 3. Interrupt Handling (IDT & PIC)
-The Interrupt Descriptor Table (IDT) maps 256 interrupt gates.
+### 2.1 Segmentation (GDT)
+**File**: `kernel/arch/i386/cpu/gdt.cpp`
+Before interrupts or multitasking can function, we establish a **Flat Memory Model**. The GDT defines two primary segments:
+*   **Kernel Code (0x08)**: Executable memory at Ring 0.
+*   **Kernel Data (0x10)**: Writable memory at Ring 0.
+The `gdt_install` function populates the table and uses assembly to reload the segment registers (`cs`, `ds`, `es`, `fs`, `gs`, `ss`).
 
-### PIC Remapping
-The Programmable Interrupt Controller (8259 PIC) is remapped to avoid conflicts with CPU exceptions:
-- **Master PIC**: Remapped to 0x20 - 0x27.
-- **Slave PIC**: Remapped to 0x28 - 0x2F.
+### 2.2 The Interrupt Chain (IDT, ISR, IRQ)
+KevOS uses a multi-layered approach to handle hardware and software events:
 
-### Interrupt Service Routines (ISRs)
-- **ISRs 0-31**: Handle CPU exceptions (e.g., Divide-by-Zero, Page Fault).
-- **IRQs 32-47**: Handle hardware interrupts.
+1.  **`idt.cpp`**: Defines the 256 gates in the Interrupt Descriptor Table.
+2.  **`interrupts.S`**: Contains assembly stubs for every interrupt. These stubs:
+    *   Push the interrupt number and error code to the stack.
+    *   Save all registers (`pusha`).
+    *   Call the C++ handler (`isr_handler` or `irq_handler`).
+    *   Restore registers (`popa`) and return via `iret`.
+3.  **`isr.cpp`**: Manages exceptions 0–31 (e.g., Page Faults). It captures the state of the CPU via the `registers` struct defined in `idt.h`.
+4.  **`irq.cpp`**: Manages hardware interrupts 32–47. It maintains an array of function pointers (`irq_routines`). Drivers register themselves here using `irq_install_handler`.
+5.  **`pic.cpp`**: Remaps the 8259 Programmable Interrupt Controllers. Hardware IRQs 0–15 are mapped to IDT vectors 32–47 to avoid clashing with CPU exceptions. It also handles the **EOI (End of Interrupt)** signal.
 
-*Logic Flow*:
-1. Hardware triggers interrupt.
-2. Assembly stub in `interrupts.S` saves registers (`pusha`).
-3. Stub calls C++ handler (`isr_handler` or `irq_handler`).
-4. Handler performs logic (e.g., reading keyboard port).
-5. IRQ handlers send EOI (End of Interrupt) to the PIC.
-6. Assembly stub restores registers and calls `iret`.
+## 3. Interactive Subsystem (The Driver Stack)
 
-## 4. Drivers
+### 3.1 Keyboard-to-Shell Flow
+Tracing a keypress in KevOS:
+1.  **Hardware**: User presses 'A'. The keyboard controller triggers **IRQ 1**.
+2.  **PIC**: The PIC translates this to **IDT Vector 33** and signals the CPU.
+3.  **Assembly**: The stub in `interrupts.S` saves the state and calls `irq_handler(33)`.
+4.  **IRQ Manager**: `irq.cpp` looks at its table and calls the `keyboard_handler` registered by the driver.
+5.  **Keyboard Driver (`keyboard.cpp`)**: 
+    *   Reads the scancode from Port `0x60`.
+    *   Translates scancode to ASCII ('a') using `kbd_us`.
+    *   Applies modifier logic (Shift/Caps Lock).
+    *   Pushes the character into a **Circular Buffer** (`kbd_buffer`).
+6.  **Shell (`shell.cpp`)**:
+    *   `shell_readline` calls `keyboard_getchar`.
+    *   `keyboard_getchar` blocks (executes `hlt`) until the buffer is non-empty.
+    *   The character is retrieved and echoed via `terminal_putchar`.
 
-### VGA (tty.cpp)
-Supports:
-- Writing characters and strings.
-- Terminal scrolling when the bottom row is exceeded.
-- Newline (`\n`) processing.
-- Color configuration via VGA attributes.
+### 3.2 VGA Output (TTY)
+**File**: `kernel/arch/i386/drivers/tty.cpp`
+*   **Memory**: Manages the VGA buffer at `0xB8000`.
+*   **Features**: Hardware cursor movement via I/O ports `0x3D4/0x3D5`, screen scrolling by shifting the 80x25 grid, and newline/backspace interpretation.
+*   **Interface**: Exposed via `terminal_putchar`, which is the primary sink for `printf`.
 
-### Keyboard (keyboard.cpp)
-- **Port**: 0x60 (Data), 0x64 (Status).
-- **Mapping**: Uses Scancode Set 1.
-- **Logic**: Currently translates "key down" events into ASCII and pushes them directly to the terminal.
+## 4. The Library Layer (libc)
+KevOS provides a freestanding `libc` located in `/libc/`. 
 
-## 5. System Library (libc)
-A custom freestanding `libc` is implemented to provide standard C functions without relying on a host OS.
-- **Location**: `/libc/`
-- **Key Functions**: `printf`, `memcpy`, `memset`, `strlen`.
+*   **freestanding vs hosted**: Our `libc` does not rely on kernel syscalls yet. It is compiled as `libk` for kernel use.
+*   **Plumbing**: `printf` calls `putchar`, which is implemented in `libc/stdio/putchar.cpp`. In the kernel context, this `putchar` is linked to `terminal_putchar` in `tty.cpp`.
+*   **Memory/String**: Standard implementations of `memcpy`, `memset`, `strcmp`, and `strlen` allow the kernel and drivers to use familiar C logic.
 
-## 6. Future 64-bit Scaling
-The directory structure separates `arch/i386` from the main `kernel/` logic. To move to 64-bit:
-1. Add `arch/x86_64`.
-2. Implement 4-level Paging.
-3. Update GDT to include Long Mode bits.
+## 5. File Manifest & Connectivity Matrix
+
+| Component | Files | Primary Responsibility | Connected To |
+| :--- | :--- | :--- | :--- |
+| **Boot** | `boot.S` | Multiboot, Stack, C++ Init | `kernel.cpp` |
+| **Segments** | `gdt.cpp` | Flat Memory Model | CPU hardware |
+| **Remapping** | `pic.cpp` | Hardware IRQ routing | `irq.cpp` |
+| **Interrupts** | `idt.cpp`, `interrupts.S` | Gate definitions & stubs | `isr.cpp`, `irq.cpp` |
+| **Managers** | `isr.cpp`, `irq.cpp` | C++ event handling | Drivers (Keyboard) |
+| **Video** | `tty.cpp` | VGA buffer (0xB8000) | `shell.cpp`, `libc` |
+| **Input** | `keyboard.cpp` | Scancode -> ASCII | `shell.cpp`, `irq.cpp` |
+| **Interface** | `shell.cpp` | Command execution | `keyboard.cpp`, `tty.cpp` |
+| **Library** | `libc/` | Standard logic | Entire Project |
+
+## 6. Physical Memory Layout
+
+| Address Range | Usage | Managed By |
+| :--- | :--- | :--- |
+| `0x00000000 - 0x000003FF` | IVT (Real Mode) | Inherited from BIOS |
+| `0x00000400 - 0x000004FF` | BDA (BIOS Data Area) | BIOS |
+| `0x000B8000 - 0x000B8FA0` | VGA Text Buffer | `tty.cpp` |
+| `0x00100000` | Kernel Load Start | GRUB / `linker.ld` |
+| `0x00100000 + kernel_size` | Kernel End / Free Memory | (Future) PMM |
+
+## 7. Future Architectural Shifts
+The current i386 implementation is designed to be swapped.
+1.  **PMM Integration**: The next phase introduces `MEM-01`, which will sit between the Bootloader and the rest of the kernel, managing physical page bitmaps.
+2.  **Long Mode**: Transitioning to `x86_64` will require a new `arch/x86_64` directory, replacing the 32-bit GDT/IDT/Paging logic while keeping `kernel/kernel/` generic logic intact.

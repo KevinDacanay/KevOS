@@ -473,14 +473,3 @@ So build:
 10. Multitasking
 ```
 
----
-
-# Final Notes
-
-Once your cross-compiler works, you are ready to begin:
-
-```text id="u6n7fr"
-Bootloader → Kernel → VGA Output → Interrupts → Shell
-```
-
-That is the beginning of a real operating system.

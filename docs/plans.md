@@ -9,15 +9,16 @@
 | **CORE-03** | PIC Remapping & IRQ Handling | High | 4h | **Done** |
 | **DRV-01** | VGA Text Mode Driver (Scrolling/Newline) | High | 5h | **Done** |
 | **DRV-02** | Keyboard Driver (Scancode Translation) | High | 4h | **Done** |
-| **UI-01** | Keyboard Input Buffering (Line Discipline) | Highest | 4h | **In-Progress** | 
-| **DRV-04** | VGA Hardware Cursor Management | Highest | 3h | **Todo** |
-| **UI-02** | Simple Command Parser (`help`, `clear`) | Highest | 6h | **Todo** |
-| **CORE-04** | PIT (Programmable Interval Timer) Setup | Highest | 4h | **Todo** |
-| **MEM-01** | Physical Memory Manager (PMM) - Bitmap | Highest | 10h | **Todo** | 
+| **UI-01** | Keyboard Input Buffering (Line Discipline) | Highest | 4h | **Done** | 
+| **DRV-04** | VGA Hardware Cursor Management | Highest | 3h | **Done** | 
+| **UI-02** | Simple Command Parser (`help`, `clear`, `echo`, `version`, `setcolor`, `reboot`, `panic`) | Highest | 6h | **Done** |
+| **MEM-01** | Physical Memory Manager (PMM) - Bitmap | Highest | 10h | **Done** | 
+| **MEM-02** | Virtual Memory Manager (Paging) | High | 12h | **Done** |
+| **MEM-04** | Higher-Half Kernel Mapping | Medium | 8h | **Done** |
+| **MEM-03** | Kernel Heap Allocator (kmalloc) | Medium | 8h | **Done** |
+| **CORE-05** | Task State Segment (TSS) Setup | High | 6h | **In Progress** |
+| **CORE-04** | PIT (Programmable Interval Timer) Setup | Highest | 4h | **Done** |
 | **DRV-03** | Circular Buffers for Data I/O | Medium | 3h | **Todo** |
-| **MEM-02** | Virtual Memory Manager (Paging) | High | 12h | **Todo** |
-| **MEM-04** | Higher-Half Kernel Mapping | Medium | 8h | **Todo** |
-| **MEM-03** | Kernel Heap Allocator (kmalloc) | Medium | 8h | **Todo** |
 | **MEM-05** | Slab Allocator for Kernel Objects | Low | 12h | **Todo** |
 | **PROC-01** | Process Control Block (PCB) & TCB Structures | High | 10h | **Todo** |
 | **PROC-02** | Context Switching Logic | High | 12h | **Todo** |
