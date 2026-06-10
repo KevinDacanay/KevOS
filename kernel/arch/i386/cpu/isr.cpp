@@ -20,7 +20,13 @@
  */
 extern "C" void isr_handler(struct registers* regs) {
     if (regs->int_no < 32) {
-        printf("CPU Exception: %d. System Halted.\n", regs->int_no);
+        printf("\n--- KERNEL PANIC: CPU EXCEPTION ---\n");
+        printf("Exception ID: %d\n", regs->int_no);
+        printf("Error Code:   %d\n", regs->err_code);
+        printf("EIP: 0x%x  CS: 0x%x  EFLAGS: 0x%x\n", regs->eip, regs->cs, regs->eflags);
+        printf("EAX: 0x%x  EBX: 0x%x  ECX: 0x%x  EDX: 0x%x\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
+        printf("ESP: 0x%x  EBP: 0x%x  ESI:   0x%x  EDI: 0x%x\n", regs->esp, regs->ebp, regs->esi, regs->edi);
+        printf("\nSystem Halted.\n");
         for (;;) {
             asm volatile("hlt");
         }
