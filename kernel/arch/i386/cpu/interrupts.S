@@ -49,6 +49,7 @@ gdt_flush:
     mov %ax, %es        // Reload extra segment register
     mov %ax, %fs        // Reload FS segment register
     mov %ax, %gs        // Reload GS segment register
+    mov %ax, %ss        // Reload stack segment register
     ljmp $0x08, $.flush // Far jump to reload CS register (0x08 is kernel code segment selector)
 .flush:
     ret

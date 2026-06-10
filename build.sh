@@ -37,19 +37,20 @@ $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/pic.cpp -o bin/pic.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/gdt.cpp -o bin/gdt.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/idt.cpp -o bin/idt.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/isr.cpp -o bin/isr.o
-$HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/irq.cpp -o bin/irq.o
+$HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/irq.cpp -o bin/irq.o # irq.cpp needs to be compiled before pit.cpp
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/drivers/keyboard.cpp -o bin/keyboard.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/mm/pmm.cpp -o bin/pmm.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/mm/vmm.cpp -o bin/vmm.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/mm/heap.cpp -o bin/heap.o
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/drivers/shell.cpp -o bin/shell.o
+$HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/pit.cpp -o bin/pit.o
 
 # Compile C++ Kernel (main logic)
 $HOST-g++ $COMMON_FLAGS -c kernel/kernel/kernel.cpp -o bin/kernel.o
 
 # Link the final kernel
 $HOST-g++ -T kernel/arch/i386/boot/linker.ld -o bin/kevos.kernel -ffreestanding -O2 -nostdlib \
-    bin/crti.o bin/boot.o bin/interrupts.o bin/kernel.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/keyboard.o bin/pmm.o bin/vmm.o bin/heap.o bin/shell.o bin/putchar.o bin/printf.o bin/strlen.o bin/strcmp.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
+    bin/crti.o bin/boot.o bin/interrupts.o bin/kernel.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/pit.o bin/keyboard.o bin/pmm.o bin/vmm.o bin/heap.o bin/shell.o bin/putchar.o bin/printf.o bin/strlen.o bin/strcmp.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
 
 if [ -f bin/kevos.kernel ]; then
     echo "Build successful: bin/kevos.kernel"

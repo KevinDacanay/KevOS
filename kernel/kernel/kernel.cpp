@@ -11,6 +11,7 @@
 #include <kernel/multiboot.h>
 #include <kernel/arch/i386/mm/include/pmm.h>
 #include <kernel/arch/i386/mm/include/vmm.h>
+#include <kernel/arch/i386/cpu/include/pit.h>
 #include <kernel/arch/i386/mm/include/heap.h>
 #include <kernel/arch/i386/cpu/include/pic.h>
 #include <kernel/arch/i386/cpu/include/gdt.h>
@@ -28,6 +29,10 @@
 extern "C" void kernel_main(uint32_t magic, uint32_t multiboot_ptr) {
     terminal_initialize();
     gdt_install();         // Initialize the Global Descriptor Table first
+    
+    // The stack_top symbol is defined in boot.S and represents the top of the kernel stack.
+    extern uint32_t stack_top; 
+    tss_install((uint32_t)&stack_top); // Initialize TSS with the kernel stack
     pic_remap(0x20, 0x28); // Remap PIC to start at IRQ 32 (0x20) and 40 (0x28)
     idt_install();         // Initialize and load the IDT
     keyboard_install();    // Register the keyboard IRQ handler
@@ -45,6 +50,7 @@ extern "C" void kernel_main(uint32_t magic, uint32_t multiboot_ptr) {
         pmm_init(mbi->mmap_addr, mbi->mmap_length);
         vmm_init();             // Enable Paging
         kheap_init();           // Initialize Kernel Heap
+        pit_init(100);          // Initialize PIT to 100 Hz
     }
 
     printf("\n");

@@ -15,6 +15,8 @@
 #include <kernel/arch/i386/mm/include/heap.h>
 #include <kernel/arch/i386/cpu/include/io.h> // For outb (reboot command)
 #include <kernel/arch/i386/cpu/include/irq.h>
+#include <kernel/arch/i386/cpu/include/gdt.h>
+#include <kernel/arch/i386/mm/include/pmm.h>
 
 /**
  * @brief Reads a line of input from the keyboard.
@@ -160,6 +162,8 @@ void shell_execute(char* cmd) {
         printf("  reboot      - Reboots the system\n");
         printf("  testheap    - Run a suite of tests on the kernel heap\n");
         printf("  uptime      - Displays the system uptime\n");
+        printf("  gdtinfo     - Displays GDT and TSS CPU state\n");
+        printf("  meminfo     - Displays physical memory usage\n");
     } 
     else if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
         printf("System halting... Safe to power off.\n");
@@ -221,6 +225,45 @@ void shell_execute(char* cmd) {
         uint32_t ticks = get_timer_ticks();
         uint32_t seconds = ticks / 100;
         printf("System uptime: %u seconds\n", seconds);
+    }
+    else if (strcmp(cmd, "gdtinfo") == 0) {
+        uint16_t tr, cs, ds, ss;
+        struct {
+            uint16_t limit;
+            uint32_t base;
+        } __attribute__((packed)) gdtp;
+
+        // Query the CPU for internal register states
+        asm volatile("str %0" : "=r"(tr));   // Store Task Register
+        asm volatile("sgdt %0" : "=m"(gdtp)); // Store GDT Pointer
+        asm volatile("mov %%cs, %0" : "=r"(cs));
+        asm volatile("mov %%ds, %0" : "=r"(ds));
+        asm volatile("mov %%ss, %0" : "=r"(ss));
+
+        printf("--- CPU GDT/TSS State ---\n");
+        printf("GDT Pointer: Base=0x%x, Limit=0x%x\n", gdtp.base, gdtp.limit);
+        printf("CS Selector: 0x%x (Expected: 0x08)\n", (uint32_t)cs);
+        printf("DS Selector: 0x%x (Expected: 0x10)\n", (uint32_t)ds);
+        printf("SS Selector: 0x%x (Expected: 0x10)\n", (uint32_t)ss);
+        printf("Task Reg:    0x%x (Expected: 0x28)\n", (uint32_t)tr);
+        
+        if (ss != GDT_KERNEL_DATA_SEGMENT) {
+            terminal_setcolor_colors(VGA_COLOR_RED, VGA_COLOR_BLACK);
+            printf("WARNING: SS selector mismatch! Check gdt_flush assembly.\n");
+            terminal_setcolor_colors(VGA_COLOR_MAGENTA, VGA_COLOR_BLACK);
+        }
+
+        if (tr == GDT_TSS_SEGMENT) {
+            printf("Status: TSS is active and correctly loaded.\n");
+        }
+    }
+    else if (strcmp(cmd, "meminfo") == 0) {
+        size_t free_mem = pmm_get_free_memory();
+        size_t total_mem = pmm_get_total_memory(); // Assuming pmm_get_total_memory() exists or can be added
+        size_t used_mem = total_mem - free_mem;
+        printf("--- Physical Memory Info ---\n");
+        printf("Free Memory: %u KB\n", free_mem / 1024);
+        printf("Used Memory: %u KB\n", used_mem / 1024);
     }
     else if (strcmp(cmd, "whatisthis") == 0) {
         printf("KevOS is a custom-built, 32-bit x86 operating system.\n");

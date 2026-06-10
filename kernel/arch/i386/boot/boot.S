@@ -25,6 +25,7 @@
 .align 16                        # Align the stack to 16 bytes (important for SSE and ABI compliance).
 stack_bottom:                    # Label for bottom of the stack.
 .skip 16384                      # Reserve 16 KiB = 16 * 1024 bytes = 0x4000 bytes.
+.global stack_top
 stack_top:                       # Label for the top of the stack (grows downward).
 
 # ========== Bootstrap Paging Structures ==========

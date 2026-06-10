@@ -108,11 +108,12 @@ int printf(const char* __restrict format, ...) {
 			format++;
 		} 
 		// Fallback for unknown specifiers
+		// Treat the '%' as a literal and continue to the next character.
 		else {
 			terminal_write("%", 1);
-			terminal_write("%", 1);
-			format++;
-			written += 2;
+			written++;
+			// We do not increment format here, so the next loop 
+			// iteration processes the character after the '%'
 		}
 	}
 
