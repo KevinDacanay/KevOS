@@ -11,6 +11,9 @@
 #include <kernel/arch/i386/cpu/include/pic.h>
 #include <stddef.h>
 
+// Global tick counter for the system timer (IRQ 0)
+static uint32_t timer_ticks = 0;
+
 // Array of function pointers for custom IRQ handlers.
 // Each element corresponds to an IRQ line (0-15).
 void* irq_routines[16] = {
@@ -42,10 +45,24 @@ extern "C" void irq_install_handler(int irq, void (*handler)(struct registers *r
 extern "C" void irq_handler(struct registers* regs) {
     void (*handler)(struct registers *r);
 
+    // IRQ 0 (the system timer) is mapped to interrupt 32.
+    if (regs->int_no == 32) {
+        timer_ticks++;
+    }
+
     handler = (void (*)(struct registers *r))irq_routines[regs->int_no - 32];
     if (handler) {
         handler(regs);
     }
 
     pic_eoi(regs->int_no - 32); // Send EOI to the appropriate PIC (master or slave)
+}
+
+/**
+ * @brief Returns the total number of system ticks since the PIT was initialized.
+ * 
+ * @return uint32_t The current tick count.
+ */
+extern "C" uint32_t get_timer_ticks() {
+    return timer_ticks;
 }

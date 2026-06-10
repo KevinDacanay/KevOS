@@ -14,6 +14,7 @@
 #include <kernel/arch/i386/drivers/include/keyboard.h>
 #include <kernel/arch/i386/mm/include/heap.h>
 #include <kernel/arch/i386/cpu/include/io.h> // For outb (reboot command)
+#include <kernel/arch/i386/cpu/include/irq.h>
 
 /**
  * @brief Reads a line of input from the keyboard.
@@ -158,6 +159,7 @@ void shell_execute(char* cmd) {
         printf("  setcolor <fg> <bg> - Sets terminal foreground and background colors\n");
         printf("  reboot      - Reboots the system\n");
         printf("  testheap    - Run a suite of tests on the kernel heap\n");
+        printf("  uptime      - Displays the system uptime\n");
     } 
     else if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
         printf("System halting... Safe to power off.\n");
@@ -214,6 +216,11 @@ void shell_execute(char* cmd) {
     }
     else if (strcmp(cmd, "testheap") == 0) {
         test_heap();
+    }
+    else if (strcmp(cmd, "uptime") == 0) {
+        uint32_t ticks = get_timer_ticks();
+        uint32_t seconds = ticks / 100;
+        printf("System uptime: %u seconds\n", seconds);
     }
     else if (strcmp(cmd, "whatisthis") == 0) {
         printf("KevOS is a custom-built, 32-bit x86 operating system.\n");
