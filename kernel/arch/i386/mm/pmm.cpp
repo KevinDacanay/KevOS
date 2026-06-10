@@ -166,6 +166,15 @@ size_t pmm_get_free_memory() {
 }
 
 /**
+ * @brief Returns the total amount of physical memory managed by the PMM in bytes.
+ * @return The total number of managed bytes.
+ */
+size_t pmm_get_total_memory() {
+    return pmm_max_blocks * PAGE_SIZE;
+}
+
+
+/**
  * @brief Allocates a single free physical page.
  *
  * Searches the bitmap for the first available (free) page, marks it as used,
