@@ -4,10 +4,10 @@
 export HOST=i686-elf
 
 # Setup the toolchain paths
-export COMPILER_PATH="/home/kevin/Documents/Codes/ProjectsOnline/OperatingSystemProjectCompiler/CrossCompiler/opt/cross"
+export COMPILER_PATH="/home/kevin/Documents/Codes/ProjectsOnline/KevOSCompiler/CrossCompiler/opt/cross"
 export PATH="$COMPILER_PATH/bin:$PATH"
 
-export PROJECT_DIR="/home/kevin/Documents/Codes/ProjectsOnline/OperatingSystemsProject"
+export PROJECT_DIR="/home/kevin/Documents/Codes/ProjectsOnline/KevOS"
 export SYSROOT="$PROJECT_DIR/sysroot"
 
 # Diagnostic: Check if the compiler binary actually exists and is executable

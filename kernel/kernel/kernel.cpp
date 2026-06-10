@@ -1,15 +1,30 @@
+/**
+ * @file kernel.cpp
+ * @brief Architecture-independent kernel initialization entry point.
+ * 
+ * orchestrates the setup of core CPU structures (GDT, IDT) and 
+ * memory management (PMM, VMM, Heap) before launching the user interface.
+ */
 #include <stdio.h>
 
 #include <kernel/tty.h>
 #include <kernel/multiboot.h>
 #include <kernel/arch/i386/mm/include/pmm.h>
 #include <kernel/arch/i386/mm/include/vmm.h>
+#include <kernel/arch/i386/mm/include/heap.h>
 #include <kernel/arch/i386/cpu/include/pic.h>
 #include <kernel/arch/i386/cpu/include/gdt.h>
 #include <kernel/arch/i386/cpu/include/idt.h>
 #include <kernel/arch/i386/drivers/include/keyboard.h>
 #include <kernel/arch/i386/drivers/include/shell.h>
 
+/**
+ * @brief The main kernel entry point.
+ * 
+ * Called by boot.S after the stack and basic paging are set up.
+ * @param magic Multiboot magic number (should be 0x2BADB002).
+ * @param multiboot_ptr Physical pointer to the multiboot info structure.
+ */
 extern "C" void kernel_main(uint32_t magic, uint32_t multiboot_ptr) {
     terminal_initialize();
     gdt_install();         // Initialize the Global Descriptor Table first
@@ -29,6 +44,7 @@ extern "C" void kernel_main(uint32_t magic, uint32_t multiboot_ptr) {
     if (mbi->flags & (1 << 6)) { // Check if mmap is available
         pmm_init(mbi->mmap_addr, mbi->mmap_length);
         vmm_init();             // Enable Paging
+        kheap_init();           // Initialize Kernel Heap
     }
 
     printf("\n");
