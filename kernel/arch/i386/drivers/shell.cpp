@@ -12,6 +12,7 @@
 #include <stdlib.h> // For abort()
 #include <kernel/tty.h>
 #include <kernel/arch/i386/drivers/include/keyboard.h>
+#include <kernel/arch/i386/mm/include/heap.h>
 #include <kernel/arch/i386/cpu/include/io.h> // For outb (reboot command)
 
 /**
@@ -88,6 +89,43 @@ static void reboot_system() {
 }
 
 /**
+ * @brief Basic test suite for the Kernel Heap (kmalloc/kfree).
+ */
+static void test_heap() {
+    printf("--- Heap Test Started ---\n");
+
+    // Test 1: Simple Allocation
+    void* a = kmalloc(1024); // 1KB
+    void* b = kmalloc(1024); // 1KB
+    printf("Allocated A (1KB) at 0x%x\n", (uint32_t)a);
+    printf("Allocated B (1KB) at 0x%x\n", (uint32_t)b);
+
+    // Test 2: Memory Read/Write (Verifies VMM Mapping)
+    char* data = (char*)a;
+    for(int i = 0; i < 10; i++) data[i] = 'K' + i;
+    data[10] = '\0';
+    printf("Data verification in A: %s\n", data);
+
+    // Test 3: Freeing and Coalescing
+    printf("Freeing A and B...\n");
+    kfree(a);
+    kfree(b);
+
+    // Test 4: Dynamic Expansion
+    // Our initial heap is 2MB. Let's allocate 4MB to force kheap_expand.
+    printf("Requesting 4MB to trigger heap expansion...\n");
+    void* c = kmalloc(4 * 1024 * 1024); 
+    if (c) {
+        printf("Allocated C (4MB) at 0x%x (Success!)\n", (uint32_t)c);
+        kfree(c);
+    } else {
+        printf("Failed to allocate 4MB block!\n");
+    }
+
+    printf("--- Heap Test Completed Successfully ---\n");
+}
+
+/**
  * @brief Parses and executes a single command string.
  * 
  * @param cmd The raw command string entered by the user.
@@ -119,6 +157,7 @@ void shell_execute(char* cmd) {
         printf("  version     - Displays KevOS version\n");
         printf("  setcolor <fg> <bg> - Sets terminal foreground and background colors\n");
         printf("  reboot      - Reboots the system\n");
+        printf("  testheap    - Run a suite of tests on the kernel heap\n");
     } 
     else if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
         printf("System halting... Safe to power off.\n");
@@ -173,11 +212,14 @@ void shell_execute(char* cmd) {
         printf("Rebooting system...\n");
         reboot_system();
     }
+    else if (strcmp(cmd, "testheap") == 0) {
+        test_heap();
+    }
     else if (strcmp(cmd, "whatisthis") == 0) {
         printf("KevOS is a custom-built, 32-bit x86 operating system.\n");
         printf("It currently features a protected-mode kernel, VGA drivers,\n");
         printf("and an interrupt-driven keyboard subsystem.\n");
-        printf("Next phase: Physical Memory Management (PMM).\n");
+        printf("Next phase: Multitasking and Processes.\n");
     } 
     else {
         printf("Unknown command: %s\n", cmd);

@@ -10,6 +10,7 @@
  */
 
 #include <kernel/arch/i386/mm/include/pmm.h>
+#include <kernel/arch/i386/mm/include/vmm.h>
 #include <kernel/multiboot.h>
 #include <string.h>
 #include <stdio.h>
@@ -89,7 +90,10 @@ void pmm_init(uint32_t mmap_addr, uint32_t mmap_length) {
     
     // 2. Place the bitmap immediately after the kernel in memory.
     //    The kernel's end address is provided by the linker script.
-    pmm_bitmap = (uint8_t*)_kernel_end;
+    //    We subtract KERNEL_VIRT_BASE because the bitmap is stored in physical RAM.
+    //    Note: We cast to uint32_t first to handle the pointer arithmetic correctly.
+    uint32_t phys_kernel_end = (uint32_t)_kernel_end - KERNEL_VIRT_BASE;
+    pmm_bitmap = (uint8_t*)phys_kernel_end;
     
     // Calculate the size of the bitmap in bytes.
     // Each bit represents a page, so (total pages / 8) bytes are needed.
@@ -130,11 +134,13 @@ void pmm_init(uint32_t mmap_addr, uint32_t mmap_length) {
     //    and the PMM's own bitmap structure.
     //    This prevents the PMM from allocating memory that is already in use
     //    by the kernel or its own management structures.
-    uint32_t kernel_start_block = (uint32_t)((uint32_t)_kernel_start / PAGE_SIZE);
+    //    We convert virtual symbols to physical addresses.
+    uint32_t phys_kernel_start = (uint32_t)_kernel_start - KERNEL_VIRT_BASE;
+    uint32_t kernel_start_block = phys_kernel_start / PAGE_SIZE;
 
     // The end of the reserved area includes the kernel and the bitmap itself.
     // We round up to the next page boundary for safety.
-    uint32_t reserved_end_addr = (uint32_t)_kernel_end + bitmap_size;
+    uint32_t reserved_end_addr = phys_kernel_end + bitmap_size;
     uint32_t kernel_and_bitmap_end_block = (reserved_end_addr + PAGE_SIZE - 1) / PAGE_SIZE;
 
     for (uint32_t i = kernel_start_block; i < kernel_and_bitmap_end_block; i++) {
