@@ -3,6 +3,7 @@
 #include <kernel/tty.h>
 #include <kernel/multiboot.h>
 #include <kernel/arch/i386/mm/include/pmm.h>
+#include <kernel/arch/i386/mm/include/vmm.h>
 #include <kernel/arch/i386/cpu/include/pic.h>
 #include <kernel/arch/i386/cpu/include/gdt.h>
 #include <kernel/arch/i386/cpu/include/idt.h>
@@ -27,7 +28,7 @@ extern "C" void kernel_main(uint32_t magic, uint32_t multiboot_ptr) {
     multiboot_info* mbi = (multiboot_info*)multiboot_ptr;
     if (mbi->flags & (1 << 6)) { // Check if mmap is available
         pmm_init(mbi->mmap_addr, mbi->mmap_length);
-        printf("Free memory: %d KB\n", pmm_get_free_memory() / 1024);
+        vmm_init();             // Enable Paging
     }
 
     printf("\n");

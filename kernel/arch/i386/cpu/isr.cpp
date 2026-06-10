@@ -22,6 +22,13 @@ extern "C" void isr_handler(struct registers* regs) {
     if (regs->int_no < 32) {
         printf("\n--- KERNEL PANIC: CPU EXCEPTION ---\n");
         printf("Exception ID: %d\n", regs->int_no);
+
+        if (regs->int_no == 14) { // Page Fault
+            uint32_t faulting_addr;
+            asm volatile("mov %%cr2, %0" : "=r"(faulting_addr));
+            printf("Faulting Address: 0x%x\n", faulting_addr);
+        }
+
         printf("Error Code:   %d\n", regs->err_code);
         printf("EIP: 0x%x  CS: 0x%x  EFLAGS: 0x%x\n", regs->eip, regs->cs, regs->eflags);
         printf("EAX: 0x%x  EBX: 0x%x  ECX: 0x%x  EDX: 0x%x\n", regs->eax, regs->ebx, regs->ecx, regs->edx);
