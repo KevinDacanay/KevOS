@@ -29,6 +29,7 @@ $HOST-g++ -c kernel/arch/i386/boot/boot.S -o bin/boot.o -ffreestanding -O2 -Wall
 $HOST-g++ -c kernel/arch/i386/boot/crti.s -o bin/crti.o -ffreestanding
 $HOST-g++ -c kernel/arch/i386/boot/crtn.s -o bin/crtn.o -ffreestanding
 $HOST-g++ -c kernel/arch/i386/cpu/interrupts.S -o bin/interrupts.o -ffreestanding -O2 -Wall -Wextra
+$HOST-g++ -c kernel/arch/i386/process/switch.S -o bin/switch.o -ffreestanding
 
 # Compile Driver/Arch components
 $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/drivers/tty.cpp -o bin/tty.o
@@ -47,10 +48,13 @@ $HOST-g++ $COMMON_FLAGS -c kernel/arch/i386/cpu/pit.cpp -o bin/pit.o
 
 # Compile C++ Kernel (main logic)
 $HOST-g++ $COMMON_FLAGS -c kernel/kernel/kernel.cpp -o bin/kernel.o
+$HOST-g++ $COMMON_FLAGS -c kernel/kernel/task.cpp -o bin/task.o
+$HOST-g++ $COMMON_FLAGS -c kernel/kernel/syscall.cpp -o bin/syscall.o
+$HOST-g++ $COMMON_FLAGS -c kernel/kernel/spinlock.cpp -o bin/spinlock.o
 
 # Link the final kernel
 $HOST-g++ -T kernel/arch/i386/boot/linker.ld -o bin/kevos.kernel -ffreestanding -O2 -nostdlib \
-    bin/crti.o bin/boot.o bin/interrupts.o bin/kernel.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/pit.o bin/keyboard.o bin/pmm.o bin/vmm.o bin/heap.o bin/shell.o bin/putchar.o bin/printf.o bin/strlen.o bin/strcmp.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
+    bin/crti.o bin/boot.o bin/interrupts.o bin/switch.o bin/kernel.o bin/task.o bin/syscall.o bin/spinlock.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/pit.o bin/keyboard.o bin/pmm.o bin/vmm.o bin/heap.o bin/shell.o bin/putchar.o bin/printf.o bin/strlen.o bin/strcmp.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
 
 if [ -f bin/kevos.kernel ]; then
     echo "Build successful: bin/kevos.kernel"
