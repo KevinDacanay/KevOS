@@ -24,6 +24,7 @@ extern "C" {
     void irq4();  void irq5();  void irq6();  void irq7();
     void irq8();  void irq9();  void irq10(); void irq11();
     void irq12(); void irq13(); void irq14(); void irq15();
+    void isr128(); // int 0x80
 }
 
 // Array of IDT entries
@@ -106,6 +107,9 @@ void idt_install(void) {
     idt_set_gate(45, (uint32_t)irq13, 0x08, 0x8E);
     idt_set_gate(46, (uint32_t)irq14, 0x08, 0x8E);
     idt_set_gate(47, (uint32_t)irq15, 0x08, 0x8E);
+
+    // System Call Gate (0x80). Set DPL to 3 (0xEE)
+    idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE);
 
     // Load the IDT into the CPU using the 'lidt' assembly instruction.
     asm volatile("lidt %0" : : "m"(idt_ptr));

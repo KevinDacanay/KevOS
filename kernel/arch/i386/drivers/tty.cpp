@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <kernel/arch/i386/cpu/include/io.h>
+#include <kernel/include/kernel/spinlock.h>
 #include <kernel/tty.h>
 
 /**
@@ -34,6 +35,9 @@ static size_t terminal_row;           ///< Current cursor Y position
 static size_t terminal_column;        ///< Current cursor X position
 static uint8_t terminal_color;        ///< Current text attribute (color)
 static uint16_t* terminal_buffer;     ///< Pointer to the VGA memory (0xB8000)
+
+// Global lock for terminal access
+static spinlock_t tty_lock = 0;
 
 /**
  * @brief Updates the hardware cursor position on the screen.
@@ -119,12 +123,9 @@ void terminal_scroll() {
 /**
  * @brief Writes a single character to the terminal.
  * 
- * Handles special characters like '\n' (Newline) and '\b' (Backspace).
- * Automatically triggers scrolling if the cursor exceeds the bottom row.
- * 
- * @param c The character to display.
+ * Internal version: Assumes the tty_lock is already held.
  */
-void terminal_putchar(char c) {
+static void terminal_putchar_unlocked(char c) {
     // Handle Newline
 	if (c == '\n') {
 		terminal_column = 0;
@@ -165,9 +166,26 @@ void terminal_putchar(char c) {
 	update_cursor();
 }
 
+/**
+ * @brief Writes a single character to the terminal.
+ * 
+ * Handles special characters like '\n' (Newline) and '\b' (Backspace).
+ * Automatically triggers scrolling if the cursor exceeds the bottom row.
+ * 
+ * @param c The character to display.
+ */
+void terminal_putchar(char c) {
+    spinlock_acquire(&tty_lock);
+    terminal_putchar_unlocked(c);
+    spinlock_release(&tty_lock);
+}
+
 void terminal_write(const char* data, size_t size) {
-	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
+    spinlock_acquire(&tty_lock);
+	for (size_t i = 0; i < size; i++) {
+		terminal_putchar_unlocked(data[i]);
+    }
+    spinlock_release(&tty_lock);
 }
 
 void terminal_writestring(const char* data) {

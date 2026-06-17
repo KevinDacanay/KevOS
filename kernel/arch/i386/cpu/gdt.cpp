@@ -91,3 +91,11 @@ extern "C" void tss_install(uint32_t kernel_stack_ptr) {
 
     printf("TSS installed. Kernel stack top: 0x%x\n", kernel_stack_ptr);
 }
+
+/**
+ * @brief Updates the kernel stack pointer in the TSS.
+ * @param stack The new top of the kernel stack.
+ */
+extern "C" void tss_set_stack(uint32_t stack) {
+    tss_entry.esp0 = stack;
+}

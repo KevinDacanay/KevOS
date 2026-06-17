@@ -33,7 +33,7 @@ static void kheap_expand(size_t pages) {
             printf("KERNEL PANIC: Out of physical memory during heap expansion!\n");
             for (;;);
         }
-        vmm_map_page(phys, (void*)heap_current_end, VMM_PRESENT | VMM_WRITABLE);
+        vmm_map_page(phys, (void*)heap_current_end, VMM_PRESENT | VMM_WRITABLE | VMM_USER);
         heap_current_end += PAGE_SIZE;
     }
 }

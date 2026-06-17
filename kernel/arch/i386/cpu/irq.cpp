@@ -9,6 +9,7 @@
 
 #include <kernel/arch/i386/cpu/include/irq.h>
 #include <kernel/arch/i386/cpu/include/pic.h>
+#include <kernel/include/kernel/task.h>
 #include <stddef.h>
 
 // Global tick counter for the system timer (IRQ 0)
@@ -53,6 +54,13 @@ extern "C" void irq_handler(struct registers* regs) {
     handler = (void (*)(struct registers *r))irq_routines[regs->int_no - 32];
     if (handler) {
         handler(regs);
+    }
+    
+    // If this was a timer interrupt, trigger the scheduler for preemption
+    if (regs->int_no == 32) {
+        pic_eoi(0); // Must send EOI before switching tasks
+        schedule();
+        return;
     }
 
     pic_eoi(regs->int_no - 32); // Send EOI to the appropriate PIC (master or slave)

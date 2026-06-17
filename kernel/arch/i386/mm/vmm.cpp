@@ -25,13 +25,13 @@ void vmm_init() {
     // 3. Identity map the first 4MB of physical memory.
     // This is required so the CPU can transition from physical to virtual addresses smoothly.
     for (uint32_t i = 0; i < 1024; i++) {
-        first_page_table[i] = (i * PAGE_SIZE) | VMM_PRESENT | VMM_WRITABLE;
+        first_page_table[i] = (i * PAGE_SIZE) | VMM_PRESENT | VMM_WRITABLE | VMM_USER;
     }
 
     // 4. Set up the Page Directory entries
-    kernel_directory[0] = (uint32_t)first_page_table | VMM_PRESENT | VMM_WRITABLE;
+    kernel_directory[0] = (uint32_t)first_page_table | VMM_PRESENT | VMM_WRITABLE | VMM_USER;
     // Higher-half mapping: Map 3GB virtual to 0GB physical
-    kernel_directory[KERNEL_VIRT_BASE >> 22] = (uint32_t)first_page_table | VMM_PRESENT | VMM_WRITABLE;
+    kernel_directory[KERNEL_VIRT_BASE >> 22] = (uint32_t)first_page_table | VMM_PRESENT | VMM_WRITABLE | VMM_USER;
 
     // Recursive mapping: The 1023rd entry points back to the directory.
     // This makes PD accessible at 0xFFFFF000 and PTs at 0xFFC00000.

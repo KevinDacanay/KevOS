@@ -17,6 +17,7 @@
 #include <kernel/arch/i386/cpu/include/irq.h>
 #include <kernel/arch/i386/cpu/include/gdt.h>
 #include <kernel/arch/i386/mm/include/pmm.h>
+#include <kernel/include/kernel/task.h> // Required for task_print_list
 
 /**
  * @brief Reads a line of input from the keyboard.
@@ -164,6 +165,7 @@ void shell_execute(char* cmd) {
         printf("  uptime      - Displays the system uptime\n");
         printf("  gdtinfo     - Displays GDT and TSS CPU state\n");
         printf("  meminfo     - Displays physical memory usage\n");
+        printf("  ps          - List all running tasks\n");
     } 
     else if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
         printf("System halting... Safe to power off.\n");
@@ -264,6 +266,9 @@ void shell_execute(char* cmd) {
         printf("--- Physical Memory Info ---\n");
         printf("Free Memory: %u KB\n", free_mem / 1024);
         printf("Used Memory: %u KB\n", used_mem / 1024);
+    }
+    else if (strcmp(cmd, "ps") == 0) {
+        task_print_list();
     }
     else if (strcmp(cmd, "whatisthis") == 0) {
         printf("KevOS is a custom-built, 32-bit x86 operating system.\n");
