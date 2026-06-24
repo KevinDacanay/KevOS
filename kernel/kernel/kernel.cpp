@@ -21,6 +21,14 @@
 #include <kernel/include/kernel/syscall.h>
 #include <kernel/arch/i386/drivers/include/shell.h>
 #include <kernel/include/kernel/task.h>
+#include <kernel/fs/initrd.h>
+
+struct multiboot_module {
+    uint32_t mod_start;
+    uint32_t mod_end;
+    uint32_t string;
+    uint32_t reserved;
+};
 
 /**
  * @brief Assembly helper to jump to Ring 3.
@@ -87,6 +95,13 @@ extern "C" void kernel_main(uint32_t magic, uint32_t multiboot_ptr) {
         kheap_init();           // Initialize Kernel Heap
         pit_init(100);          // Initialize PIT to 100 Hz
         syscall_init();         // Initialize System Calls
+    }
+    
+    // Initialize Initrd if present
+    if (mbi->flags & (1 << 3)) { // Check if mods are available
+        struct multiboot_module* mod = (struct multiboot_module*)mbi->mods_addr;
+        fs_root = initialise_initrd(mod->mod_start);
+        printf("Initrd loaded at 0x%x\n", mod->mod_start);
     }
 
     tasking_init();

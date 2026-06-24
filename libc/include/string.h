@@ -24,6 +24,9 @@ void* memset(void*, int, size_t);
 // Compare two strings
 int strcmp(const char*, const char*);
 
+// Copy a string
+char* strcpy(char* dest, const char* src);
+
 // Get string length (not including null terminator)
 size_t strlen(const char*);
 

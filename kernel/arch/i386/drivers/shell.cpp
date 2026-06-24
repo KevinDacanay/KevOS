@@ -18,6 +18,7 @@
 #include <kernel/arch/i386/cpu/include/gdt.h>
 #include <kernel/arch/i386/mm/include/pmm.h>
 #include <kernel/include/kernel/task.h> // Required for task_print_list
+#include <kernel/fs/vfs.h>
 
 /**
  * @brief Reads a line of input from the keyboard.
@@ -166,6 +167,8 @@ void shell_execute(char* cmd) {
         printf("  gdtinfo     - Displays GDT and TSS CPU state\n");
         printf("  meminfo     - Displays physical memory usage\n");
         printf("  ps          - List all running tasks\n");
+        printf("  ls          - List files in root directory\n");
+        printf("  cat <file>  - Read and print file contents\n");
     } 
     else if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
         printf("System halting... Safe to power off.\n");
@@ -275,6 +278,50 @@ void shell_execute(char* cmd) {
         printf("It currently features a protected-mode kernel, VGA drivers,\n");
         printf("and an interrupt-driven keyboard subsystem.\n");
         printf("Next phase: Multitasking and Processes.\n");
+    }
+    else if (strcmp(cmd, "ls") == 0) {
+        if (!fs_root) {
+            printf("No root filesystem mounted.\n");
+        } else {
+            int i = 0;
+            struct dirent *node = 0;
+            while ((node = vfs_readdir(fs_root, i)) != 0) {
+                fs_node_t *fsnode = vfs_finddir(fs_root, node->name);
+                if (fsnode) {
+                    if ((fsnode->flags & 0x7) == FS_DIRECTORY) {
+                        printf("(dir) ");
+                    } else {
+                        printf("(file) ");
+                    }
+                    printf("%s\n", node->name);
+                }
+                i++;
+            }
+        }
+    }
+    else if (strcmp(cmd, "cat") == 0) {
+        if (!args) {
+            printf("Usage: cat <filename>\n");
+            return;
+        }
+        if (!fs_root) {
+            printf("No root filesystem mounted.\n");
+            return;
+        }
+        fs_node_t *fsnode = vfs_finddir(fs_root, args);
+        if (!fsnode) {
+            printf("File not found: %s\n", args);
+            return;
+        }
+        if ((fsnode->flags & 0x7) == FS_DIRECTORY) {
+            printf("Cannot cat a directory.\n");
+            return;
+        }
+        
+        char buf[256];
+        uint32_t sz = vfs_read(fsnode, 0, 255, (uint8_t*)buf);
+        buf[sz] = '\0';
+        printf("%s\n", buf);
     } 
     else {
         printf("Unknown command: %s\n", cmd);
