@@ -7,6 +7,7 @@ cp bin/kevos.kernel isodir/boot/kevos.kernel
 cat << EOF > isodir/boot/grub/grub.cfg
 menuentry "KevOS" {
 	multiboot /boot/kevos.kernel
+	module /boot/initrd.img
 }
 EOF
 

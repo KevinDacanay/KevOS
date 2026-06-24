@@ -12,6 +12,12 @@ echo "Installing headers..."
 
 COMMON_FLAGS="--sysroot=$SYSROOT -I. -Ikernel/include -isystem=/usr/include -ffreestanding -march=i686 -O2 -Wall -Wextra -fno-exceptions -fno-rtti"
 
+echo "Building Host Tools & Initrd..."
+gcc make_initrd.c -o bin/make_initrd
+echo "Hello from Initrd!" > bin/test.txt
+./bin/make_initrd bin/test.txt
+cp initrd.img isodir/boot/initrd.img
+
 echo "Building Libc..."
 $HOST-g++ $COMMON_FLAGS -c libc/stdio/putchar.cpp -o bin/putchar.o
 $HOST-g++ $COMMON_FLAGS -c libc/string/memmove.cpp -o bin/memmove.o
@@ -22,6 +28,7 @@ $HOST-g++ $COMMON_FLAGS -c libc/string/memset.cpp -o bin/memset.o
 $HOST-g++ $COMMON_FLAGS -c libc/string/strlen.cpp -o bin/strlen.o
 $HOST-g++ $COMMON_FLAGS -c libc/string/strcmp.cpp -o bin/strcmp.o
 $HOST-g++ $COMMON_FLAGS -c libc/string/memcpy.cpp -o bin/memcpy.o
+$HOST-g++ $COMMON_FLAGS -c libc/string/strcpy.cpp -o bin/strcpy.o
 
 echo "Building Kernel..."
 # Compile Assembly components (arch-specific)
@@ -51,10 +58,12 @@ $HOST-g++ $COMMON_FLAGS -c kernel/kernel/kernel.cpp -o bin/kernel.o
 $HOST-g++ $COMMON_FLAGS -c kernel/kernel/task.cpp -o bin/task.o
 $HOST-g++ $COMMON_FLAGS -c kernel/kernel/syscall.cpp -o bin/syscall.o
 $HOST-g++ $COMMON_FLAGS -c kernel/kernel/spinlock.cpp -o bin/spinlock.o
+$HOST-g++ $COMMON_FLAGS -c kernel/kernel/fs/vfs.cpp -o bin/vfs.o
+$HOST-g++ $COMMON_FLAGS -c kernel/kernel/fs/initrd.cpp -o bin/initrd.o
 
 # Link the final kernel
 $HOST-g++ -T kernel/arch/i386/boot/linker.ld -o bin/kevos.kernel -ffreestanding -O2 -nostdlib \
-    bin/crti.o bin/boot.o bin/interrupts.o bin/switch.o bin/kernel.o bin/task.o bin/syscall.o bin/spinlock.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/pit.o bin/keyboard.o bin/pmm.o bin/vmm.o bin/heap.o bin/shell.o bin/putchar.o bin/printf.o bin/strlen.o bin/strcmp.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
+    bin/crti.o bin/boot.o bin/interrupts.o bin/switch.o bin/kernel.o bin/task.o bin/syscall.o bin/spinlock.o bin/vfs.o bin/initrd.o bin/tty.o bin/io.o bin/pic.o bin/gdt.o bin/idt.o bin/isr.o bin/irq.o bin/pit.o bin/keyboard.o bin/pmm.o bin/vmm.o bin/heap.o bin/shell.o bin/putchar.o bin/printf.o bin/strlen.o bin/strcmp.o bin/strcpy.o bin/memcpy.o bin/memmove.o bin/memset.o bin/abort.o bin/raise.o bin/crtn.o -lgcc
 
 if [ -f bin/kevos.kernel ]; then
     echo "Build successful: bin/kevos.kernel"
