@@ -16,11 +16,18 @@ The following core components are fully operational:
 - **IDT (Interrupt Descriptor Table)**: Full interrupt routing for all 256 gates.
 - **PIC Remapping**: Hardware interrupts correctly routed to the 0x20-0x2F range.
 - **ISRs & IRQs**: Exception handling and hardware interrupt management.
+- **PIT (Programmable Interval Timer)**: Configured for system timing and preemptive scheduling.
 
 ### 2. Drivers & Input
 - **VGA Text Driver**: Supports 80x25 terminal output with newline processing and automatic scrolling.
 - **Keyboard Driver**: Interrupt-driven scancode translation with support for **Shift**, **Caps Lock**, and **Backspace**.
 - **Internal libc**: Freestanding implementation of `stdio` and `string` functions.
+- **Interactive Shell**: Robust command parser supporting `help`, `clear`, `echo`, `version`, `setcolor`, `reboot`, `testheap`, `uptime`, `gdtinfo`, `meminfo`, `ps`.
+
+### 3. Memory Management & Multitasking
+- **PMM (Physical Memory Manager)**: Bitmap-based allocation of physical pages.
+- **VMM (Virtual Memory Manager)**: Paging enabled, higher-half kernel mapping.
+- **Kernel Heap**: Dynamic memory allocation (kmalloc/kfree) within the kernel.
 
 ---
 
